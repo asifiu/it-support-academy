@@ -166,37 +166,30 @@
 
   views.today = function () {
     const p = position();
+    const go = (href, icon, text) => `<a class="go" href="${href}"><span class="dot">${ICON(icon)}</span>${text}<span class="chev">${ICON("chevrons")}</span></a>`;
     if (!p) {
       const next = mondayOf(new Date(Date.now() + 7 * 86400000));
-      return `<section class="card hello"><div><h1>Get fit for IT support in 8 weeks</h1>
-          <p>Built from 55 real job ads in Germany. Each day: about 1 hour learning, 2 hours hands-on lab, 30 minutes ITIL, 30 minutes German.</p></div></section>
+      return `<section class="card hello"><div><div class="who"><span class="av">${ICON("server")}</span><span><small>IT Support Academy</small><b>8 weeks to job-ready</b></span></div>
+          <h1>Your own lab, one day at a time</h1><p class="sub">Built from 55 real job ads in Germany. Each day: 1 hour learning, 2 hours hands-on lab, 30 minutes ITIL, 30 minutes German.</p></div></section>
         <section class="card"><h2>Choose your start date</h2>
           <label class="field">Week 1 begins on this Monday<input type="date" id="startDate" value="${isoDate(new Date().getDay() === 1 ? new Date() : next)}"></label>
           <p class="muted small">Preset to the next Monday. Any Monday works.</p>
-          <button class="btn" id="startBtn">${ICON("play")}Start my plan</button></section>`;
+          <button class="go" id="startBtn"><span class="dot">${ICON("play")}</span>Start my plan<span class="chev">${ICON("chevrons")}</span></button></section>`;
     }
-    if (p.before) return `<section class="card hello"><div><h1>Your plan starts in ${p.days} day${p.days === 1 ? "" : "s"}</h1>
-      <p>Use the time to switch on Hyper-V and download the evaluation ISOs (Week 1, Day 2).</p>
-      <a class="btn" href="#/day/1/1">${ICON("book")}Read the first lesson early</a></div></section>`;
+    if (p.before) return `<section class="card hello"><div><div class="who"><span class="av">${ICON("clock")}</span><span><small>Starts soon</small><b>${p.days} day${p.days === 1 ? "" : "s"} to go</b></span></div>
+      <h1>Get the lab ready before Monday</h1><p class="sub">Switch on Hyper-V and download the evaluation ISOs (Week 1, Day 2).</p>${go("#/day/1/1", "book", "Read the first lesson early")}</div></section>`;
     const wk = PLAN[p.week - 1];
     const itil = ITIL.lessons[p.week - 1];
     const due = germanDue().length;
     const pct = totalProgress();
     const h = new Date().getHours();
     const greet = h < 12 ? "Good morning" : h < 18 ? "Good afternoon" : "Good evening";
-    let cta, task;
-    if (p.finished) { cta = `<a class="btn" href="#/plan">${ICON("calendar")}Review the plan</a>`; task = `<section class="card task"><span class="tic">${ICON("trophy")}</span><div><h2>You finished the 8 weeks</h2><p class="muted">Keep going: 1 lab, 1 ticket set and 15 German minutes a day. Repeat weak quizzes.</p></div></section>`; }
-    else if (p.dow <= 4) {
-      const d = wk.days[p.dow], keys = dayKeys(wk.id, p.dow + 1), doneN = keys.filter((k) => S.done[k]).length;
-      cta = `<a class="btn" href="#/day/${wk.id}/${p.dow + 1}">${ICON("play")}Continue today's lesson</a>`;
-      task = `<a class="card task" href="#/day/${wk.id}/${p.dow + 1}"><span class="tic">${ICON("book")}</span><div><p class="kicker">Today · Week ${wk.id}, day ${p.dow + 1}</p><h2>${esc(d.title)}</h2>${bar(doneN / keys.length * 100)}<p class="muted small" style="margin:0">${doneN} of ${keys.length} steps done · Lesson, lab, self-check</p></div></a>`;
-    } else if (p.dow === 5) {
-      cta = `<a class="btn" href="#/quiz/${wk.id}">${ICON("target")}Start the week ${wk.id} test</a>`;
-      task = `<a class="card task" href="#/quiz/${wk.id}"><span class="tic">${ICON("target")}</span><div><p class="kicker">Saturday</p><h2>Week ${wk.id} test and lab write-up</h2><p class="muted" style="margin:0">Do the quiz, then put this week's notes and screenshots in your GitHub homelab repo.</p></div></a>`;
-    } else {
-      cta = `<button class="btn ghost" data-open-de>${ICON("language")}10 German cards</button>`;
-      task = `<section class="card task"><span class="tic">${ICON("clock")}</span><div><p class="kicker">Sunday</p><h2>Rest day</h2><p class="muted" style="margin:0">Optional: 10 German cards and one ticket. Rest is part of learning.</p></div></section>`;
-    }
+    const daysDone = PLAN.reduce((n, w) => n + w.days.filter((_, i) => dayDone(w.id, i + 1)).length, 0);
+    let headline, sub, cta;
+    if (p.finished) { headline = "You finished all 8 weeks"; sub = "Keep one lab, one ticket set and 15 German minutes a day."; cta = go("#/plan", "calendar", "Review the plan"); }
+    else if (p.dow <= 4) { const d = wk.days[p.dow]; headline = d.title; sub = `Day ${p.dow + 1} of week ${wk.id}: ${wk.title}`; cta = go(`#/day/${wk.id}/${p.dow + 1}`, "play", "Start today's lesson"); }
+    else if (p.dow === 5) { headline = `Week ${wk.id} test`; sub = "Take the quiz, then write up this week's lab in your GitHub repo."; cta = go(`#/quiz/${wk.id}`, "target", "Start the test"); }
+    else { headline = "Rest day"; sub = "Optional: 10 German cards and one ticket."; cta = `<button class="go" data-open-de><span class="dot">${ICON("language")}</span>Practise 10 German cards<span class="chev">${ICON("chevrons")}</span></button>`; }
     const names = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
     const strip = names.map((n, i) => {
       const now = !p.finished && i === p.dow;
@@ -204,30 +197,34 @@
       const href = i < 5 ? `#/day/${wk.id}/${i + 1}` : i === 5 ? `#/quiz/${wk.id}` : "";
       const label = i < 5 ? "Day " + (i + 1) : i === 5 ? "Test" : "Rest";
       const cls = [done ? "done" : "", now ? "now" : ""].join(" ").trim();
-      return href ? `<a href="${href}" class="${cls}" aria-label="${n}: ${label}${done ? ", done" : ""}">${n}<b>${done ? "✓" : label}</b></a>` : `<span class="${cls}">${n}<b>${label}</b></span>`;
+      const inner = `${n}<b>${done ? "✓" : label}</b>`;
+      return href ? `<a href="${href}" class="${cls}" aria-label="${n}: ${label}${done ? ", done" : ""}${now ? ", today" : ""}">${inner}</a>` : `<span class="${cls}">${inner}</span>`;
     }).join("");
-    const daysDone = PLAN.reduce((n, w) => n + w.days.filter((_, i) => dayDone(w.id, i + 1)).length, 0);
-    const tests = Object.keys(S.quiz).length;
-    const tile = (ic, val, lbl) => `<div class="card tile"><span class="tic">${ICON(ic)}</span><div><b>${val}</b><span class="lbl">${lbl}</span></div></div>`;
+    const tile = (href, ic, val, lbl) => `<a class="card tile" href="${href}"><span class="tic">${ICON(ic)}</span><span class="corner">${ICON("expand")}</span><b>${val}</b><span class="lbl">${lbl}</span></a>`;
     return `<section class="card hello">
-        <div><p class="kicker" style="color:rgba(255,255,255,.8)">Week ${p.week} of 8</p><h1>${greet}</h1><p>${esc(wk.title)}</p>${cta}<a class="btn ghost" href="#/plan">${ICON("calendar")}Full plan</a></div>
-        <div class="ring" style="--p:${pct}" role="img" aria-label="${pct}% of the course done"><div><span><b>${pct}%</b><br><small>complete</small></span></div></div>
+        <div>
+          <div class="who"><span class="av">${ICON("server")}</span><span><small>${greet}</small><b>Week ${p.week} of 8</b></span></div>
+          <h1>${esc(headline)}</h1><p class="sub">${esc(sub)}</p>${cta}
+        </div>
+        <div class="gauge" role="img" aria-label="${pct}% of the course done">
+          <small>Course progress</small><b>${pct}%</b>${bar(pct)}<div class="scale"><span>0</span><span>${daysDone} of 40 days</span></div>
+        </div>
       </section>
-      <div class="sec-h"><h2>This week</h2><a href="#/plan" class="small">Week ${wk.id} details</a></div>
+      <div class="sec-h"><h2>This week</h2><a href="#/plan">Open the plan</a></div>
       <div class="weekstrip">${strip}</div>
-      <div class="sec-h"><h2>Up next</h2></div>
-      ${task}
-      <div class="tiles">
-        ${tile("check", daysDone + "/40", "lesson days done")}
-        ${tile("target", tests + "/8", "week tests taken")}
-        ${tile("badge", S.itil.I8 != null ? S.itil.I8 + "/40" : "Not yet", "best ITIL mock")}
-        ${tile("cards", due, "German cards due")}
+      <div class="sec-h"><h2>Your routine</h2></div>
+      <div class="bento">
+        <a class="card task wide" href="#/itil/${esc(itil.id)}"><span class="tic">${ICON("badge")}</span><span class="corner">${ICON("expand")}</span>
+          <h3>ITIL ${esc(itil.id)}: ${esc(itil.title)}</h3><p class="muted small" style="margin:0">30 minutes${S.itil[itil.id] != null ? `, best quiz score ${S.itil[itil.id]}` : ", notes then quiz"}</p></a>
+        <button class="card task wide" data-open-de style="text-align:left;font:inherit;cursor:pointer;width:100%"><span class="tic">${ICON("language")}</span><span class="corner">${ICON("expand")}</span>
+          <h3>${due} German cards due</h3><p class="muted small" style="margin:0">30 minutes of phone phrases, instructions and IT words</p></button>
+        ${tile("#/plan", "check", daysDone + "<small style='font-size:1rem;color:var(--text-3)'>/40</small>", "Lesson days done")}
+        ${tile("#/plan", "target", Object.keys(S.quiz).length + "<small style='font-size:1rem;color:var(--text-3)'>/8</small>", "Week tests taken")}
+        ${tile("#/itil/mock", "badge", S.itil.I8 != null ? S.itil.I8 + "<small style='font-size:1rem;color:var(--text-3)'>/40</small>" : "None", "Best ITIL mock")}
+        ${tile("#/tickets", "ticket", Object.keys(S.tickets).length + "<small style='font-size:1rem;color:var(--text-3)'>/" + TICKETS.length + "</small>", "Tickets worked")}
       </div>
-      <div class="grid2">
-        <a class="card task" href="#/itil/${esc(itil.id)}"><span class="tic">${ICON("badge")}</span><div><p class="kicker">ITIL this week · 30 min</p><h3 style="margin:0">${esc(itil.id)}: ${esc(itil.title)}</h3>${S.itil[itil.id] != null ? `<p class="muted small" style="margin:4px 0 0">Best score: ${S.itil[itil.id]}</p>` : ""}</div></a>
-        <button class="card task" data-open-de style="text-align:left;font:inherit;color:inherit;cursor:pointer;width:100%"><span class="tic">${ICON("language")}</span><div><p class="kicker">Deutsch · 30 min</p><h3 style="margin:0">${due} cards due today</h3><p class="muted small" style="margin:4px 0 0">Phone phrases, instructions, IT words</p></div></button>
-      </div>
-      ${isStandalone() ? "" : `<a class="card row" href="#/install" style="margin-top:16px"><span class="wnum">${ICON("download")}</span><span><strong>Install on your phone</strong><small>Works offline and opens like a normal app.</small></span></a>`}`;
+      ${p.dow === 6 ? `<section class="card night" style="margin-top:14px"><div class="moon">${ICON("moon")}</div><h2>Rest is part of learning</h2><p class="muted" style="margin:0">Your brain stores this week's labs while you sleep. See you Monday.</p></section>` : ""}
+      ${isStandalone() ? "" : `<a class="card row" href="#/install" style="margin-top:14px"><span class="wnum">${ICON("download")}</span><span><strong>Install on your phone</strong><small>Works offline and opens like a normal app.</small></span></a>`}`;
   };
   views.today.after = function () {
     const b = $("#startBtn");

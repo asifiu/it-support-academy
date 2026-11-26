@@ -41,7 +41,7 @@ The plan comes from 55 real IT support and sysadmin job ads in Germany (Oct to N
 
 ## What is in the app
 
-**Design:** clean enterprise style (neutral greys, navy accent, Segoe UI, line icons), light and dark mode, side navigation on PC, bottom bar on phones, and a search box at the top that searches lessons, guides, handbook fixes and ITIL (press `/` to jump to it).
+**Design ("graphite glass"):** a dark graphite room with frosted-glass tiles and one signal orange for actions, like the activity light on a server. Every "I did this" tick is an orange switch, progress is shown as ruler gauges, the main action is a wide orange pill, and headings use Bahnschrift (DIN style, built into Windows). Side navigation on PC, a floating bottom bar on phones, and a search box at the top (press `/`).
 
 
 - **Today**: what to do today, based on your start date.
