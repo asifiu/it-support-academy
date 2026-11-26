@@ -6,9 +6,23 @@
   /* ---------- state ---------- */
   const KEY = "itsa-v1";
   const blank = { start: null, done: {}, quiz: {}, itil: {}, cards: {}, tickets: {}, notes: {} };
+  /* Keep only well-formed values, so an edited or foreign progress file cannot inject HTML. */
+  function clean(d) {
+    const out = { start: null, done: {}, quiz: {}, itil: {}, cards: {}, tickets: {}, notes: {} };
+    if (!d || typeof d !== "object") return out;
+    const obj = (o) => (o && typeof o === "object" && !Array.isArray(o) ? o : {});
+    const safeKey = (k) => /^[A-Za-z0-9-]{1,40}$/.test(k);
+    const num = (v) => typeof v === "number" && isFinite(v);
+    if (typeof d.start === "string" && /^\d{4}-\d{2}-\d{2}$/.test(d.start)) out.start = d.start;
+    for (const [k, v] of Object.entries(obj(d.done))) if (safeKey(k) && v === true) out.done[k] = true;
+    for (const f of ["quiz", "itil", "tickets"]) for (const [k, v] of Object.entries(obj(d[f]))) if (safeKey(k) && num(v)) out[f][k] = v;
+    for (const [k, v] of Object.entries(obj(d.cards))) if (safeKey(k) && v && num(v.box) && num(v.due)) out.cards[k] = { box: v.box, due: v.due };
+    for (const [k, v] of Object.entries(obj(d.notes))) if (safeKey(k) && typeof v === "string") out.notes[k] = v.slice(0, 20000);
+    return out;
+  }
   let S;
-  try { S = Object.assign({}, blank, JSON.parse(localStorage.getItem(KEY) || "{}")); }
-  catch (e) { S = Object.assign({}, blank); }
+  try { S = clean(JSON.parse(localStorage.getItem(KEY) || "{}")); }
+  catch (e) { S = clean(null); }
   const save = () => localStorage.setItem(KEY, JSON.stringify(S));
 
   /* ---------- helpers ---------- */
@@ -353,7 +367,7 @@
     $("#imp").onchange = (e) => {
       const f = e.target.files[0]; if (!f) return;
       f.text().then((txt) => {
-        try { const d = JSON.parse(txt); if (typeof d !== "object" || !d.done) throw 0; S = Object.assign({}, blank, d); save(); $("#sMsg").textContent = "Imported."; }
+        try { const d = JSON.parse(txt); if (typeof d !== "object" || !d.done) throw 0; S = clean(d); save(); $("#sMsg").textContent = "Imported."; }
         catch (err) { $("#sMsg").textContent = "That file is not an IT Academy progress file."; }
       });
     };
