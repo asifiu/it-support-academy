@@ -1,5 +1,11 @@
 # IT Support Academy
 
+![IT Support Academy](icons/logo-horizontal.svg)
+
+**Live app:** https://asifiu.github.io/it-support-academy/ · **Design on every screen:** https://asifiu.github.io/it-support-academy/docs/showcase.html
+
+<p><img src="docs/screenshots/phone-today.png" width="230" alt="Phone"> <img src="docs/screenshots/laptop-today.png" width="560" alt="Laptop"></p>
+
 An 8-week, hands-on plan to get job-ready for **IT Support / Service Desk / Junior System Administrator** roles in Germany, with an **ITIL Foundation** course and a **workplace German** side panel. It is a small web app that works on a PC and on a phone, also offline.
 
 ## Why these topics

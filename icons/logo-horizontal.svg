@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 200" role="img" aria-label="IT Support Academy">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#34353a"/><stop offset="1" stop-color="#1b1c1f"/></linearGradient>
+  </defs>
+  <g transform="translate(20 20) scale(.3125)">
+    <rect width="512" height="512" rx="116" fill="url(#bg)"/>
+    <rect x="3" y="3" width="506" height="506" rx="113" fill="none" stroke="#fff" stroke-opacity=".10" stroke-width="6"/>
+    <rect x="118" y="140" width="276" height="58" rx="29" fill="#f3f3f4"/>
+    <rect x="118" y="227" width="208" height="58" rx="29" fill="#f3f3f4" fill-opacity=".72"/>
+    <rect x="118" y="314" width="140" height="58" rx="29" fill="#f3f3f4" fill-opacity=".44"/>
+    <circle cx="318" cy="343" r="29" fill="#ff6b1a"/>
+  </g>
+  <text x="212" y="96" font-family="Bahnschrift, 'DIN Alternate', 'Segoe UI', sans-serif" font-size="62" font-weight="600" fill="#f3f3f4">IT Support</text>
+  <text x="214" y="150" font-family="Bahnschrift, 'DIN Alternate', 'Segoe UI', sans-serif" font-size="40" font-weight="300" letter-spacing="9" fill="#b4b6bb">Academy</text>
+</svg>

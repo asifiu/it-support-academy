@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>IT Support Academy: design on every screen</title>
+<link rel="icon" href="../icons/icon.svg" type="image/svg+xml">
+<style>
+  :root { --bg: #18191b; --text: #f3f3f4; --text-2: #b4b6bb; --text-3: #8d9096; --edge: rgba(255,255,255,.10); --glass: rgba(255,255,255,.06); --signal: #ff6b1a;
+    --display: "Bahnschrift", "DIN Alternate", "Segoe UI", system-ui, sans-serif; color-scheme: dark; }
+  * { box-sizing: border-box; }
+  body { margin: 0; color: var(--text); font: 16px/1.55 "Segoe UI", system-ui, sans-serif;
+    background: radial-gradient(1000px 600px at 80% -10%, rgba(255,255,255,.07), transparent 60%), radial-gradient(900px 700px at -10% 100%, rgba(255,107,26,.07), transparent 60%), var(--bg); }
+  .wrap { max-width: 1240px; margin: 0 auto; padding: 48px 24px 80px; }
+  header { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 24px; margin-bottom: 56px; }
+  header img { height: 72px; }
+  header a { display: inline-flex; align-items: center; gap: 10px; padding: 12px 22px; border-radius: 999px; background: var(--signal); color: #1a1006; font-weight: 600; text-decoration: none; box-shadow: 0 12px 30px rgba(255,107,26,.35); }
+  h1, h2 { font-family: var(--display); font-weight: 500; }
+  h1 { font-size: clamp(2rem, 4vw, 3.2rem); line-height: 1.05; margin: 0 0 12px; max-width: 18ch; }
+  h2 { font-size: 1.4rem; margin: 64px 0 6px; }
+  p.lead { color: var(--text-2); max-width: 60ch; margin: 0; font-size: 1.08rem; }
+  p.note { color: var(--text-3); margin: 0 0 24px; }
+  .phones { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 28px; align-items: start; }
+  figure { margin: 0; }
+  figcaption { color: var(--text-2); font-size: .92rem; margin-top: 12px; text-align: center; }
+  .phone { border-radius: 44px; padding: 10px; background: linear-gradient(160deg, #3a3b40, #1c1d20); box-shadow: 0 30px 60px rgba(0,0,0,.5), inset 0 0 0 1px rgba(255,255,255,.12); }
+  .phone img { display: block; width: 100%; border-radius: 34px; }
+  .tablet { border-radius: 34px; padding: 14px; background: linear-gradient(160deg, #3a3b40, #1c1d20); box-shadow: 0 30px 60px rgba(0,0,0,.5), inset 0 0 0 1px rgba(255,255,255,.12); max-width: 560px; margin: 0 auto; }
+  .tablet img { display: block; width: 100%; border-radius: 22px; }
+  .laptop { max-width: 1000px; margin: 0 auto; }
+  .laptop .screen { border-radius: 18px 18px 0 0; padding: 12px 12px 14px; background: #1c1d20; box-shadow: inset 0 0 0 1px rgba(255,255,255,.12); }
+  .laptop .screen img { display: block; width: 100%; border-radius: 6px; }
+  .laptop .base { height: 18px; margin: 0 -40px; border-radius: 0 0 22px 22px; background: linear-gradient(180deg, #4a4b50, #26272a); box-shadow: 0 30px 50px rgba(0,0,0,.5); }
+  .monitor { max-width: 1100px; margin: 0 auto; }
+  .monitor .screen { border-radius: 16px; padding: 12px; background: #141516; box-shadow: 0 30px 60px rgba(0,0,0,.5), inset 0 0 0 1px rgba(255,255,255,.12); }
+  .monitor .screen img { display: block; width: 100%; border-radius: 6px; }
+  .monitor .stand { width: 160px; height: 60px; margin: 0 auto; background: linear-gradient(180deg, #2c2d31, #1c1d20); clip-path: polygon(30% 0, 70% 0, 85% 100%, 15% 100%); }
+  .brand { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; }
+  .tile { border: 1px solid var(--edge); background: var(--glass); border-radius: 22px; padding: 24px; }
+  .tile img { display: block; margin: 0 auto 14px; }
+  .tile h3 { font-family: var(--display); font-weight: 500; margin: 0 0 4px; }
+  .tile p { color: var(--text-2); margin: 0; font-size: .93rem; }
+  .sw { display: flex; gap: 10px; margin-top: 8px; }
+  .sw span { flex: 1; height: 54px; border-radius: 14px; border: 1px solid var(--edge); display: flex; align-items: flex-end; padding: 6px 8px; font-size: .72rem; color: var(--text-2); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <img src="../icons/logo-horizontal.svg" alt="IT Support Academy">
+    <a href="../">Open the app</a>
+  </header>
+
+  <h1>One design on every screen</h1>
+  <p class="lead">Graphite glass: frosted tiles on a dark graphite background, one signal orange for every action, ruler gauges for progress and switches for everything you finish.</p>
+
+  <h2>The logo</h2>
+  <p class="note">Three rack units that are also the three support levels, getting shorter like steps. The orange status light is your next step.</p>
+  <div class="brand">
+    <div class="tile"><img src="../icons/icon.svg" width="120" height="120" alt="App icon"><h3>App icon</h3><p>Home screen, taskbar, browser tab.</p></div>
+    <div class="tile"><img src="../icons/logo-horizontal.svg" width="100%" alt="Horizontal logo" style="max-width:260px"><h3>Logo with name</h3><p>Bahnschrift: the DIN-style typeface built into Windows.</p></div>
+    <div class="tile"><h3>Colours</h3><p>Graphite base, glass layers, one signal orange.</p>
+      <div class="sw"><span style="background:#18191b">#18191B</span><span style="background:#2c2d31">#2C2D31</span><span style="background:rgba(255,255,255,.12)">Glass</span><span style="background:#ff6b1a;color:#1a1006">#FF6B1A</span></div></div>
+  </div>
+
+  <h2>Phone</h2>
+  <p class="note">iPhone and Android size (390 px wide). Floating bottom bar, search behind the magnifier.</p>
+  <div class="phones">
+    <figure><div class="phone"><img src="screenshots/phone-today.png" alt="Today screen on a phone"></div><figcaption>Today: lesson, gauge, week</figcaption></figure>
+    <figure><div class="phone"><img src="screenshots/phone-lesson.png" alt="A lesson with a diagram on a phone"></div><figcaption>Lesson with diagram</figcaption></figure>
+    <figure><div class="phone"><img src="screenshots/phone-handbook.png" alt="Office handbook on a phone"></div><figcaption>Office handbook</figcaption></figure>
+    <figure><div class="phone"><img src="screenshots/phone-german.png" alt="German flashcards on a phone"></div><figcaption>German flashcards</figcaption></figure>
+  </div>
+
+  <h2>Tablet</h2>
+  <p class="note">iPad size (820 px wide). The menu opens from the left.</p>
+  <figure><div class="tablet"><img src="screenshots/tablet-today.png" alt="Today screen on a tablet"></div></figure>
+
+  <h2>Laptop</h2>
+  <p class="note">1366 × 768, the most common office laptop screen. Side navigation always visible.</p>
+  <figure class="laptop"><div class="screen"><img src="screenshots/laptop-today.png" alt="Today screen on a laptop"></div><div class="base"></div></figure>
+
+  <h2>Desktop monitor</h2>
+  <p class="note">1920 × 1080. Content stays centred and readable; diagrams keep a sensible size.</p>
+  <figure class="monitor"><div class="screen"><img src="screenshots/desktop-guide.png" alt="Software guide with diagram on a desktop monitor"></div><div class="stand"></div></figure>
+</div>
+</body>
+</html>
