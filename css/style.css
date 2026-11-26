@@ -125,3 +125,11 @@ dl.terms dt { font-weight: 700; margin-top: 10px; color: var(--navy-2); } dl.ter
   .bottom a.on { color: var(--navy-2); border-top: 3px solid var(--navy-2); }
   .card { padding: 14px; }
 }
+
+/* Handbook */
+.search { width: 100%; padding: 11px 14px; font: inherit; border: 1px solid var(--line); border-radius: 8px; background: var(--card); color: var(--ink); margin: 6px 0 10px; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
+.chips button { border: 1px solid var(--line); background: var(--card); color: var(--ink); border-radius: 16px; padding: 5px 12px; cursor: pointer; font: inherit; font-size: .9rem; }
+.chips button.on { background: var(--navy); color: #fff; border-color: var(--navy); }
+.hb-cat { font-size: 1rem; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); margin: 18px 0 8px; }
+.de-line { font-weight: 600; color: var(--navy-2); }

@@ -1,10 +1,10 @@
 /* Offline support: caches the app files. Bump VERSION after every content change
    so phones pick up the new lessons. */
-const VERSION = "itsa-2026-11-26-3";
+const VERSION = "itsa-2026-11-26-4";
 const FILES = [
   "./", "index.html", "css/style.css", "manifest.webmanifest", "icons/icon.svg", "icons/icon-192.png", "icons/icon-512.png",
   "js/app.js", "js/srs.js", "js/priority.js",
-  "data/plan.js", "data/lessons.js", "data/itil.js", "data/german.js", "data/tickets.js", "data/interview.js"
+  "data/plan.js", "data/lessons.js", "data/itil.js", "data/german.js", "data/tickets.js", "data/interview.js", "data/runbooks.js", "data/deepdives.js"
 ];
 self.addEventListener("install", (e) => { e.waitUntil(caches.open(VERSION).then((c) => c.addAll(FILES))); self.skipWaiting(); });
 self.addEventListener("activate", (e) => {

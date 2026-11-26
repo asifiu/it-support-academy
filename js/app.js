@@ -374,6 +374,65 @@
     $("#reset").onclick = () => { if (confirm("Delete all progress on this device? Export first if you want a copy.")) { S = Object.assign({}, blank); save(); render(); } };
   };
 
+  /* ---------- Office handbook ---------- */
+  let hbQuery = "", hbCat = "";
+  function hbMatches(r) {
+    const q = hbQuery.trim().toLowerCase();
+    if (hbCat && r.cat !== hbCat) return false;
+    if (!q) return true;
+    const hay = [r.title, r.tags, r.symptom || "", r.cat || ""].join(" ").toLowerCase();
+    return q.split(/\s+/).every((w) => hay.includes(w));
+  }
+  function hbListHTML() {
+    const rbs = RUNBOOKS.filter(hbMatches);
+    const dds = DEEPDIVES.filter((d) => !hbCat && hbMatches({ title: d.title, tags: d.tags }));
+    const cats = [...new Set(rbs.map((r) => r.cat))];
+    return (rbs.length || dds.length ? "" : `<p class="muted">Nothing found. Try one word, e.g. "printer", "vpn", "locked".</p>`) +
+      cats.map((c) => `<h2 class="hb-cat">${esc(c)}</h2>${rbs.filter((r) => r.cat === c).map((r) =>
+        `<a class="card row" href="#/handbook/rb/${esc(r.id)}"><span><strong>${esc(r.title)}</strong><small>${esc(r.symptom)}</small></span></a>`).join("")}`).join("") +
+      (dds.length ? `<h2 class="hb-cat">How it really works</h2>${dds.map((d) =>
+        `<a class="card row" href="#/handbook/dd/${esc(d.id)}"><span class="wnum">&#9881;</span><span><strong>${esc(d.title)}</strong></span></a>`).join("")}` : "");
+  }
+  views.handbook = function (kind, id) {
+    if (kind === "rb") {
+      const r = RUNBOOKS.find((x) => x.id === id); if (!r) return notFound();
+      const dd = r.deep && DEEPDIVES.find((d) => d.id === r.deep);
+      const list = (a) => `<ol class="steps">${a.map((x) => `<li>${esc(x)}</li>`).join("")}</ol>`;
+      return `<p class="kicker"><a href="#/handbook">Office handbook</a> · ${esc(r.cat)}</p><h1>${esc(r.title)}</h1>
+        <section class="card"><h2>What the user sees</h2><p>${esc(r.symptom)}</p><h2>Why it happens</h2><p>${esc(r.cause)}</p></section>
+        <section class="card"><h2>1st level: do this</h2>${list(r.l1)}</section>
+        <section class="card"><h2>2nd level: go deeper</h2>${list(r.l2)}</section>
+        ${r.cmds.length ? `<section class="card"><h2>Commands</h2>${r.cmds.map(([c, m]) => `<div class="cmd"><code>${esc(c)}</code><button class="copy" data-copy="${esc(c)}">Copy</button><p>${esc(m)}</p></div>`).join("")}</section>` : ""}
+        <section class="card"><h2>Ticket note template</h2><div class="cmd"><code>${esc(r.note)}</code><button class="copy" data-copy="${esc(r.note)}">Copy</button></div></section>
+        <section class="card"><h2>Say it in German</h2><p class="de-line">${esc(r.de)} ${sayBtn(r.de)}</p></section>
+        <section class="card note tip"><strong>Prevent it next time</strong> ${esc(r.prevent)}</section>
+        ${dd ? `<a class="card row" href="#/handbook/dd/${esc(dd.id)}"><span class="wnum">&#9881;</span><span><strong>Understand it deeply</strong><small>${esc(dd.title)}</small></span></a>` : ""}`;
+    }
+    if (kind === "dd") {
+      const d = DEEPDIVES.find((x) => x.id === id); if (!d) return notFound();
+      const related = RUNBOOKS.filter((r) => r.deep === d.id);
+      return `<p class="kicker"><a href="#/handbook">Office handbook</a> · How it really works</p><h1>${esc(d.title)}</h1>
+        <section class="card lesson">${lessonHTML(d.blocks)}${check("dd-" + d.id, "I read this and can explain it to a colleague")}</section>
+        ${related.length ? `<section class="card"><h2>Tickets this explains</h2><ul>${related.map((r) => `<li><a href="#/handbook/rb/${esc(r.id)}">${esc(r.title)}</a></li>`).join("")}</ul></section>` : ""}`;
+    }
+    const cats = [...new Set(RUNBOOKS.map((r) => r.cat))];
+    return `<h1>Office handbook</h1>
+      <p class="muted">Use it at your desk: search the problem, follow the steps, copy the commands and the ticket note. ${RUNBOOKS.length} runbooks, ${DEEPDIVES.length} deep dives.</p>
+      <input type="search" id="hbSearch" class="search" placeholder="Search: locked, printer, vpn, outlook..." value="${esc(hbQuery)}" aria-label="Search the handbook">
+      <div class="chips"><button class="${hbCat ? "" : "on"}" data-cat="">All</button>${cats.map((c) => `<button class="${hbCat === c ? "on" : ""}" data-cat="${esc(c)}">${esc(c)}</button>`).join("")}</div>
+      <div id="hbList">${hbListHTML()}</div>`;
+  };
+  views.handbook.after = function (kind) {
+    if (kind) return;
+    $("#hbSearch").oninput = (e) => { hbQuery = e.target.value; $("#hbList").innerHTML = hbListHTML(); };
+    view.querySelector(".chips").onclick = (e) => {
+      const b = e.target.closest("[data-cat]"); if (!b) return;
+      hbCat = b.dataset.cat;
+      view.querySelectorAll(".chips button").forEach((x) => x.classList.toggle("on", x === b));
+      $("#hbList").innerHTML = hbListHTML();
+    };
+  };
+
   function notFound() { return `<h1>Not found</h1><a href="#/today">Back to today</a>`; }
 
   /* ---------- German panel ---------- */

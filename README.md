@@ -44,6 +44,7 @@ The plan comes from 55 real IT support and sysadmin job ads in Germany (Oct to N
 - **Today**: what to do today, based on your start date.
 - **8-week plan**: every day has a detailed **Teach me** lesson (plain language, examples, every command explained), key points, a hands-on lab, self-check questions, free links, and a notes box.
 - **Home lab**: the VMs you build (DC01, CLIENT01, LNX01, OPNsense...) and the IP plan.
+- **Office handbook**: use it at your desk during real work. 27 runbooks for the most common office tickets (accounts, Outlook/M365, network, VPN, printers, docks, slow PCs, blue screens, updates, phishing, lost laptops, onboarding, meeting rooms). Each one: what the user sees, why it happens, 1st level steps, 2nd level steps, commands to copy, a ticket note template, a German sentence for the user, and how to prevent it. Plus 9 "How it really works" deep dives (domain logon and Kerberos, DNS resolution, Group Policy, email and Outlook, Microsoft 365 sign-in and MFA, printing, permissions, Windows boot and updates, a real day on the service desk). Searchable.
 - **Ticket trainer**: 12 realistic tickets (some in German). Choose type, impact, urgency and the best first action; get feedback.
 - **ITIL**: 8 lessons (one per week) with quizzes and a 40-question, 60-minute mock exam.
 - **Interview**: 32 technical and behaviour questions with answer hints.
@@ -67,6 +68,8 @@ All learning content is plain data in `data/`:
 | `data/german.js` | German decks and dialogs |
 | `data/tickets.js` | Ticket trainer scenarios |
 | `data/interview.js` | Interview questions |
+| `data/runbooks.js` | Office handbook runbooks |
+| `data/deepdives.js` | "How it really works" deep dives |
 
 After a change, raise `VERSION` in `sw.js` so installed phones load the new content.
 
