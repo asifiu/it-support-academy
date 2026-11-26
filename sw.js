@@ -1,6 +1,6 @@
 /* Offline support: caches the app files. Bump VERSION after every content change
    so phones pick up the new lessons. */
-const VERSION = "itsa-2026-11-27-3";
+const VERSION = "itsa-2026-11-27-4";
 const FILES = [
   "./", "index.html", "css/style.css", "manifest.webmanifest", "icons/icon.svg", "icons/icon-192.png", "icons/icon-512.png",
   "js/icons.js", "js/app.js", "js/srs.js", "js/priority.js",
@@ -15,7 +15,7 @@ self.addEventListener("activate", (e) => {
 self.addEventListener("fetch", (e) => {
   if (e.request.method !== "GET" || new URL(e.request.url).origin !== location.origin) return;
   e.respondWith(
-    fetch(e.request).then((r) => { const copy = r.clone(); caches.open(VERSION).then((c) => c.put(e.request, copy)); return r; })
+    fetch(e.request.url, { cache: "no-cache" }).then((r) => { const copy = r.clone(); caches.open(VERSION).then((c) => c.put(e.request, copy)); return r; })
       .catch(() => caches.match(e.request, { ignoreSearch: true }))
   );
 });
