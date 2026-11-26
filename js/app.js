@@ -166,7 +166,7 @@
       return `<section class="card hero"><h1>Get fit for IT support in 8 weeks</h1>
         <p>Built from 55 real job ads in Germany. Every day: about 1 hour learning, 2 hours hands-on lab, 30 minutes ITIL, 30 minutes German.</p>
         <label class="field">When do you start? (weeks begin on Monday)<input type="date" id="startDate" value="${isoDate(new Date().getDay() === 1 ? new Date() : next)}"></label>
-        <p class="muted">Tip: start this Monday, or ${esc(isoDate(next))} if you need time to prepare.</p>
+        <p class="muted">The date is set to the next Monday. You can pick any Monday you like.</p>
         <button class="btn" id="startBtn">Start my plan</button></section>`;
     }
     if (p.before) return `<section class="card"><h1>Your plan starts in ${p.days} day(s)</h1><p>Meanwhile: switch on Hyper-V and download the evaluation ISOs (Week 1, Day 2).</p><a class="btn" href="#/day/1/1">Read the first lesson early</a></section>`;
