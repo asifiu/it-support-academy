@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>IT Support Academy</title>
+<meta name="description" content="8-week practical plan for IT support and system administration, with ITIL and workplace German.">
+<meta name="theme-color" content="#1b4965">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<header class="top">
+  <button class="icon-btn menu-btn" id="menuBtn" aria-label="Open menu">&#9776;</button>
+  <a href="#/today" class="brand">IT Support Academy</a>
+  <button class="de-btn" id="deBtn" aria-label="Open German panel" title="Deutsch üben">DE</button>
+</header>
+
+<nav class="side" id="nav">
+  <a href="#/today" data-route="today"><span>&#9673;</span>Today</a>
+  <a href="#/plan" data-route="plan"><span>&#9638;</span>8-week plan</a>
+  <a href="#/labs" data-route="labs"><span>&#9881;</span>Home lab</a>
+  <a href="#/tickets" data-route="tickets"><span>&#9993;</span>Ticket trainer</a>
+  <a href="#/itil" data-route="itil"><span>&#9672;</span>ITIL</a>
+  <a href="#/interview" data-route="interview"><span>&#9742;</span>Interview</a>
+  <a href="#/german" data-route="german"><span>&#127465;&#127466;</span>German</a>
+  <a href="#/settings" data-route="settings"><span>&#9965;</span>Progress &amp; sync</a>
+</nav>
+
+<main id="view" tabindex="-1"></main>
+
+<aside class="de-panel" id="dePanel" aria-label="German practice">
+  <div class="de-head">
+    <strong>Deutsch für den IT-Support</strong>
+    <button class="icon-btn" id="deClose" aria-label="Close">&times;</button>
+  </div>
+  <div id="deBody"></div>
+</aside>
+<div class="scrim" id="scrim"></div>
+
+<nav class="bottom" id="bottomNav">
+  <a href="#/today" data-route="today">Today</a>
+  <a href="#/plan" data-route="plan">Plan</a>
+  <a href="#/tickets" data-route="tickets">Tickets</a>
+  <a href="#/itil" data-route="itil">ITIL</a>
+  <a href="#/german" data-route="german">Deutsch</a>
+</nav>
+
+<script src="data/plan.js"></script>
+<script src="data/lessons.js"></script>
+<script src="data/itil.js"></script>
+<script src="data/german.js"></script>
+<script src="data/tickets.js"></script>
+<script src="data/interview.js"></script>
+<script src="js/srs.js"></script>
+<script src="js/priority.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
