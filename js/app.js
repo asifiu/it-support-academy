@@ -136,9 +136,14 @@
   }
 
   /* ---------- lesson renderer ---------- */
-  function lessonHTML(blocks) {
-    return blocks.map((b) => {
+  function lessonHTML(blocks, keyPrefix) {
+    return blocks.map((b, bi) => {
       switch (b[0]) {
+        case "part": return `<div class="part"><span>${esc(b[1])}</span>${esc(b[2])}</div>`;
+        case "one": return `<p class="one">${esc(b[1])}</p>`;
+        case "parts": return `<div class="table"><table class="parts"><tbody>${b[1].map(([n, d]) => `<tr><th>${esc(n)}</th><td>${esc(d)}</td></tr>`).join("")}</tbody></table></div>`;
+        case "svg": return window.DIAGRAMS && DIAGRAMS[b[1]] ? `<figure class="fig">${DIAGRAMS[b[1]]}${b[2] ? `<figcaption>${esc(b[2])}</figcaption>` : ""}</figure>` : "";
+        case "done": return `<div class="note sum"><strong>Done when</strong>${b[1].map((t, i) => check((keyPrefix || "x") + "-done-" + bi + "-" + i, t)).join("")}</div>`;
         case "h": return `<h3>${esc(b[1])}</h3>`;
         case "p": return `<p>${esc(b[1])}</p>`;
         case "eg": return `<div class="note eg"><strong>Example</strong> ${esc(b[1])}</div>`;
@@ -192,6 +197,7 @@
           <p>Phone phrases, instructions and IT words. Listen and repeat out loud.</p>
           <button class="btn ghost" data-open-de>Practise now</button></section>
       </div>
+      ${isStandalone() ? "" : `<a class="card row" href="#/install" data-install><span class="wnum">&#8681;</span><span><strong>Install on your phone</strong><small>Works offline, opens like a normal app.</small></span></a>`}
       <section class="card"><p class="kicker">Overall progress</p>${bar(totalProgress())}<p class="muted">${totalProgress()}% of all lessons and labs ticked. You are in week ${p.week} of 8.</p></section>`;
   };
   views.today.after = function () {
@@ -223,8 +229,9 @@
     return `<p class="kicker"><a href="#/plan">Plan</a> · Week ${w}, day ${d}</p><h1>${esc(day.title)}</h1>
       ${lesson ? `<section class="card lesson"><h2>Teach me (step by step)</h2>${lessonHTML(lesson)}${check(k + "-teach", "I read the lesson and tried every command")}</section>`
         : `<section class="card note tip"><strong>Detailed lesson coming</strong> This day's 'Teach me' lesson is added when we reach it in our sessions. Until then, use the summary and links below.</section>`}
+      ${guideCard(k)}
       <section class="card"><h2>Key points</h2><ul>${day.learn.map((x) => `<li>${esc(x)}</li>`).join("")}</ul>${links(day.res)}${check(k + "-learn", "I understand the key points")}</section>
-      <section class="card"><h2>Hands-on lab</h2><ol class="steps">${day.lab.map((x) => `<li>${esc(x)}</li>`).join("")}</ol>${check(k + "-lab", "Lab done and written up")}
+      <section class="card"><h2>${lesson ? "Part 3: Practice (hands-on lab)" : "Hands-on lab"}</h2><ol class="steps">${day.lab.map((x) => `<li>${esc(x)}</li>`).join("")}</ol>${check(k + "-lab", "Lab done and written up")}
         <label class="field">My notes (saved on this device)<textarea data-note="${k}" rows="4">${esc(S.notes[k] || "")}</textarea></label></section>
       <section class="card"><h2>Check yourself</h2><p class="muted">Answer out loud or in your notes before moving on.</p><ul>${day.check.map((x) => `<li>${esc(x)}</li>`).join("")}</ul>${check(k + "-check", "I can answer these without looking")}</section>
       <nav class="pager">${prev ? `<a class="btn ghost" href="${prev}">Previous</a>` : "<span></span>"}<a class="btn" href="${next}">${d < 5 ? "Next day" : "Week test"}</a></nav>`;
@@ -241,7 +248,7 @@
   };
 
   views.labs = function () {
-    return `<h1>Your home lab</h1><section class="card"><p>${esc(LAB.host)}</p><p><strong>Network:</strong> ${esc(LAB.network)}</p></section>
+    return `<h1>Your home lab</h1><figure class="fig card">${(window.DIAGRAMS || {}).lab || ""}<figcaption>What you will build in 8 weeks, all inside your own PC.</figcaption></figure><section class="card"><p>${esc(LAB.host)}</p><p><strong>Network:</strong> ${esc(LAB.network)}</p></section>
       <section class="card"><h2>Machines you will build</h2><div class="table"><table><thead><tr><th>Name</th><th>System</th><th>IP</th><th>Used for</th><th>From</th></tr></thead>
       <tbody>${LAB.vms.map((r) => `<tr>${r.map((c) => `<td>${esc(c)}</td>`).join("")}</tr>`).join("")}</tbody></table></div></section>
       <section class="card"><h2>Lab rules</h2><ul>${LAB.rules.map((r) => `<li>${esc(r)}</li>`).join("")}</ul></section>`;
@@ -354,7 +361,7 @@
         <button class="btn" id="exp">Export progress</button>
         <label class="btn ghost file">Import progress<input type="file" id="imp" accept="application/json" hidden></label>
         <p class="result" id="sMsg" aria-live="polite"></p></section>
-      <section class="card"><h2>Install as an app</h2><p>PC (Edge/Chrome): the install icon in the address bar. Android (Chrome): menu > Add to home screen / Install app. iPhone (Safari): Share > Add to Home Screen. It then works offline.</p></section>
+      <section class="card"><h2>Install as an app</h2>${installHelpHTML()}</section>
       <section class="card"><h2>Reset</h2><button class="btn danger" id="reset">Delete all progress on this device</button></section>`;
   };
   views.settings.after = function () {
@@ -373,6 +380,44 @@
     };
     $("#reset").onclick = () => { if (confirm("Delete all progress on this device? Export first if you want a copy.")) { S = Object.assign({}, blank); save(); render(); } };
   };
+
+  /* ---------- Software guides ---------- */
+  function guideCard(dayKey) {
+    const id = (window.GUIDE_FOR || {})[dayKey];
+    const g = id && GUIDES.find((x) => x.id === id);
+    return g ? `<a class="card row guide-link" href="#/guides/${esc(g.id)}"><span class="wnum">1</span><span><strong>First, the big picture: ${esc(g.title)}</strong><small>${esc(g.short)}</small></span></a>` : "";
+  }
+  views.guides = function (id) {
+    if (id) {
+      const g = GUIDES.find((x) => x.id === id); if (!g) return notFound();
+      return `<p class="kicker"><a href="#/guides">Software guides</a></p><h1>${esc(g.title)}</h1>
+        <section class="card lesson">${lessonHTML(g.blocks, "g-" + g.id)}</section>`;
+    }
+    return `<h1>Software guides</h1><p class="muted">Every guide: 1. Big picture, 2. Go deeper, 3. Practice. Read the big picture before the day that uses the tool.</p>
+      ${GUIDES.map((g) => `<a class="card row" href="#/guides/${esc(g.id)}"><span><strong>${esc(g.title)}</strong><small>${esc(g.short)}</small></span></a>`).join("")}`;
+  };
+
+  /* ---------- Install as an app ---------- */
+  let installEvt = null;
+  const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+  const isStandalone = () => matchMedia("(display-mode: standalone)").matches || navigator.standalone === true;
+  window.addEventListener("beforeinstallprompt", (e) => { e.preventDefault(); installEvt = e; document.body.classList.add("can-install"); });
+  window.addEventListener("appinstalled", () => { installEvt = null; document.body.classList.remove("can-install"); });
+  function installHelpHTML() {
+    if (isStandalone()) return `<p><strong>Installed.</strong> You are using the app version.</p>`;
+    const ios = `<ol class="steps"><li>Open this page in <strong>Safari</strong> (not Chrome: on iPhone only Safari can install)</li><li>Tap the <strong>Share</strong> button <span class="kbd">&#x2B06;&#xFE0E; in a square</span> at the bottom</li><li>Scroll down, tap <strong>Add to Home Screen</strong>, then <strong>Add</strong></li></ol>`;
+    const android = `<ol class="steps"><li>Open this page in <strong>Chrome</strong></li><li>Tap the <strong>&#8942;</strong> menu (top right)</li><li>Tap <strong>Install app</strong> or <strong>Add to Home screen</strong>, then <strong>Install</strong></li><li>Samsung Internet: menu <strong>&#8801;</strong> > <strong>Add page to</strong> > <strong>Home screen</strong></li></ol>`;
+    const pc = `<ol class="steps"><li>Edge or Chrome: click the install icon at the right end of the address bar, or menu > Apps > Install this site as an app</li></ol>`;
+    return `${installEvt ? `<button class="btn" data-install>Install now</button>` : ""}
+      <h3>${isIOS ? "iPhone / iPad" : "Android phone"}</h3>${isIOS ? ios : android}<h3>${isIOS ? "Android phone" : "iPhone / iPad"}</h3>${isIOS ? android : ios}<h3>Computer</h3>${pc}
+      <p class="muted small">The install option only appears on the online address (asifiu.github.io), not in private/incognito tabs, and not inside apps like WhatsApp or Gmail: open the link in the real browser first.</p>`;
+  }
+  views.install = function () { return `<h1>Install the app</h1><section class="card">${installHelpHTML()}</section>`; };
+  document.addEventListener("click", async (e) => {
+    if (!e.target.closest("[data-install]")) return;
+    if (installEvt) { installEvt.prompt(); await installEvt.userChoice; installEvt = null; document.body.classList.remove("can-install"); render(); }
+    else location.hash = "#/install";
+  });
 
   /* ---------- Office handbook ---------- */
   let hbQuery = "", hbCat = "";
@@ -412,7 +457,7 @@
       const d = DEEPDIVES.find((x) => x.id === id); if (!d) return notFound();
       const related = RUNBOOKS.filter((r) => r.deep === d.id);
       return `<p class="kicker"><a href="#/handbook">Office handbook</a> · How it really works</p><h1>${esc(d.title)}</h1>
-        <section class="card lesson">${lessonHTML(d.blocks)}${check("dd-" + d.id, "I read this and can explain it to a colleague")}</section>
+        <section class="card lesson">${lessonHTML(d.blocks, "dd-" + d.id)}${check("dd-" + d.id, "I read this and can explain it to a colleague")}</section>
         ${related.length ? `<section class="card"><h2>Tickets this explains</h2><ul>${related.map((r) => `<li><a href="#/handbook/rb/${esc(r.id)}">${esc(r.title)}</a></li>`).join("")}</ul></section>` : ""}`;
     }
     const cats = [...new Set(RUNBOOKS.map((r) => r.cat))];

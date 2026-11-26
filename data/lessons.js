@@ -6,6 +6,7 @@
 window.LESSONS = {
 
 "1-1": [
+  ["part", "1", "Big picture"],
   ["h", "What does an IT support person really do?"],
   ["p", "Think of IT support like a doctor's practice for computers. A user comes with a 'pain' (\"my email does not work\"). You ask questions, find the cause, fix it or send them to a specialist, and write everything in the patient file. The patient file is the ticket."],
   ["h", "The 3 support levels"],
@@ -15,7 +16,9 @@ window.LESSONS = {
     "2nd level: deeper technical work. Server problems, group policies, permissions, software deployment, network issues. Gets tickets that 1st level could not solve.",
     "3rd level: specialists and vendors (Microsoft, the firewall company, the developers). Bugs, design changes."
   ]],
+  ["svg", "levels", "Who handles what: most tickets end at 1st level"],
   ["eg", "A user cannot open a shared folder. 1st level checks: is the user in the right group? Is the path correct? If everything looks right but it still fails for the whole department, it goes to 2nd level, because the file server itself may be broken."],
+  ["part", "2", "Go deeper"],
   ["h", "The 6-step troubleshooting method"],
   ["p", "Professionals do not guess randomly. They follow the same steps every time. Learn these by heart; interviewers love asking about them."],
   ["steps", [
@@ -26,6 +29,7 @@ window.LESSONS = {
     "Verify it works: ask the user to test. Make sure nothing else broke. Prevent it if you can.",
     "Document: write in the ticket what the cause was and what you did. Next time someone finds the answer in 1 minute."
   ]],
+  ["svg", "cycle", "The loop professionals follow for every ticket"],
   ["tip", "Short form to remember: Ask, Guess, Test, Fix, Check, Write."],
   ["h", "What makes a good ticket"],
   ["p", "A ticket is a written record of one issue. A bad ticket says: 'PC broken'. A good ticket lets a colleague continue without calling the user again."],
@@ -45,11 +49,15 @@ window.LESSONS = {
 ],
 
 "1-2": [
+  ["part", "1", "Big picture"],
   ["h", "What is a virtual machine (VM)?"],
   ["p", "A VM is a computer that runs inside your computer, as a program. It has its own (virtual) CPU, memory, disk and network card. You can install Windows Server in it, break it, and reset it, without any risk to your real PC. This is how you get practical experience at home for free."],
   ["eg", "Like a flat inside a building: the building (your PC) gives electricity and water (CPU, RAM), but each flat (VM) has its own door and furniture."],
+  ["svg", "hyperv", "One physical PC, several virtual computers, three kinds of virtual network"],
   ["h", "Hypervisor: the program that runs VMs"],
   ["p", "Type 1 hypervisor runs directly on the hardware (VMware ESXi, Hyper-V on a server, Proxmox): used in companies. Type 2 runs on top of a normal OS (VirtualBox, VMware Workstation). Hyper-V on Windows 11 Pro is actually type 1 underneath, and it is free with your Windows."],
+  ["svg", "lab", "Where this course takes your lab: today you start with CLIENT01"],
+  ["part", "2", "Go deeper"],
   ["h", "Step by step: switch on Hyper-V"],
   ["steps", [
     "Press the Windows key, type 'Windows features', open 'Turn Windows features on or off'.",
@@ -87,6 +95,7 @@ window.LESSONS = {
 ],
 
 "1-3": [
+  ["part", "1", "Big picture"],
   ["h", "Your Windows toolbox"],
   ["p", "Most support work happens in a few built-in tools. You open almost all of them with Win + R (the Run box) and a short name. Learn the names; it is much faster than clicking through menus, and it impresses colleagues."],
   ["cmd", "compmgmt.msc", "Computer Management: one window with Event Viewer, local users, disks and services together."],
@@ -96,6 +105,7 @@ window.LESSONS = {
   ["cmd", "eventvwr.msc", "Event Viewer: Windows' diary. Errors and warnings with time. The first place to look for 'it crashed yesterday'."],
   ["cmd", "lusrmgr.msc", "Local Users and Groups (not in Home edition)."],
   ["cmd", "control", "The old Control Panel. Still needed for some settings (e.g. Mail profiles)."],
+  ["part", "2", "Go deeper"],
   ["h", "Event Viewer: read Windows' diary"],
   ["steps", [
     "Open eventvwr.msc. Left: Windows Logs > System (hardware, drivers, services) and Application (programs).",
@@ -122,6 +132,7 @@ window.LESSONS = {
 ],
 
 "1-4": [
+  ["part", "1", "Big picture"],
   ["h", "Hardware in plain words"],
   ["steps", [
     "CPU: the brain. Does the calculations.",
@@ -133,6 +144,7 @@ window.LESSONS = {
   ["h", "Drivers"],
   ["p", "A driver is a translator between Windows and a device. Wrong or missing driver = device does not work. In Device Manager a yellow triangle shows the problem. Right-click the device > Properties > Driver: Update, Roll Back (go back to the old one after a bad update), or Uninstall."],
   ["tip", "If something stopped working after an update, 'Roll Back Driver' is often the 1-minute fix."],
+  ["part", "2", "Go deeper"],
   ["h", "Disks: GPT, partitions, drive letters"],
   ["p", "A new disk is empty. You must 1) initialise it (choose GPT, the modern style; MBR is old, max 2 TB), 2) create a partition (a section), 3) format it with a file system (NTFS for Windows), 4) give it a letter."],
   ["steps", [
@@ -166,6 +178,7 @@ window.LESSONS = {
 ],
 
 "1-5": [
+  ["part", "1", "Big picture"],
   ["h", "Onboarding: a new person starts"],
   ["p", "A new employee must be able to work from the first hour. That only works with a checklist, because 10 small things are needed and forgetting one (e.g. MFA) blocks the person."],
   ["steps", [
@@ -186,6 +199,7 @@ window.LESSONS = {
     "Delete the account after the agreed period (e.g. 30-90 days)."
   ]],
   ["warn", "Copying an old user to create a new one ('make him like Peter') copies every right Peter collected in 10 years. Use department groups instead."],
+  ["part", "2", "Go deeper"],
   ["h", "Imaging: how laptops get Windows"],
   ["p", "Old way: one 'golden image' is made and copied to every PC (WDS/MDT). Modern way: Windows Autopilot. The laptop comes from the shop, the user signs in with the company account, and Intune installs settings and apps over the internet. No IT person has to touch it."],
   ["h", "Why sysprep before cloning"],

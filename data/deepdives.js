@@ -4,6 +4,7 @@ window.DEEPDIVES = [
 { id: "logon", title: "What happens when someone logs on to a domain PC", tags: "active directory kerberos login dc time trust",
   blocks: [
   ["p", "Every morning hundreds of people press Ctrl+Alt+Del. When it fails, you can only fix it fast if you know the steps in between. Here they are."],
+  ["svg", "logon", "The four steps of a domain logon and file access"],
   ["h", "Step 1: the PC finds a domain controller (DC)"],
   ["p", "The PC asks its DNS server: 'where are the domain controllers for lab.example.com?' It asks for special SRV records like _ldap._tcp.dc._msdcs.lab.example.com. The answer is a list of DCs, preferably in the PC's own AD site."],
   ["warn", "If the PC uses a public DNS server (8.8.8.8 or the home router), it never finds a DC. This is the No. 1 reason for 'the domain is not available' and failed domain joins."],
@@ -35,6 +36,7 @@ window.DEEPDIVES = [
     "The DNS servers from the network settings, in order. Short names get the DNS suffix added (fileserver becomes fileserver.company.local).",
     "Fallbacks for short names in the local network: LLMNR and NetBIOS (old, often disabled for security)."
   ]],
+  ["svg", "dns", "Where Windows looks for a name"],
   ["cmd", "Resolve-DnsName fileserver", "Shows the full name, the IP and where the answer came from. Better than nslookup because it uses the same path as Windows."],
   ["cmd", "nslookup fileserver.company.local 10.10.10.10", "Asks ONE specific DNS server directly. Compare servers when answers differ."],
   ["cmd", "ipconfig /flushdns", "Deletes the cache. Use after a server got a new IP."],
@@ -49,6 +51,7 @@ window.DEEPDIVES = [
   blocks: [
   ["h", "Where GPOs live"],
   ["p", "A GPO has two halves: an object in AD and a folder in SYSVOL (\\\\domain\\SYSVOL) on every DC. Both are replicated between DCs. If replication is broken, PCs talking to different DCs get different settings."],
+  ["svg", "gpo", "Processing order: later wins"],
   ["h", "Order: L, S, D, OU"],
   ["p", "Local policy first, then Site, then Domain, then OUs from top to bottom. Later wins. So a GPO on the 'Berlin > Laptops' OU beats one on the domain, unless the domain GPO is set to 'Enforced'. 'Block inheritance' on an OU stops higher GPOs (except enforced ones)."],
   ["h", "When it applies"],
@@ -76,6 +79,7 @@ window.DEEPDIVES = [
     "The MX points to Exchange Online Protection (company-de.mail.protection.outlook.com).",
     "EOP checks spam, malware, SPF, DKIM, DMARC, then delivers to the inbox, the junk folder or quarantine."
   ]],
+  ["svg", "mail", "Inbound mail path in Microsoft 365"],
   ["h", "SPF, DKIM, DMARC in one minute"],
   ["p", "SPF (a TXT record) lists which servers may send for your domain. DKIM signs each mail with a key published in DNS. DMARC tells receivers what to do if SPF/DKIM fail (none, quarantine, reject) and where to send reports. When a company's newsletter tool is not in SPF, its mails land in spam everywhere."],
   ["h", "How Outlook finds the mailbox"],
@@ -99,6 +103,7 @@ window.DEEPDIVES = [
     "If allowed, Entra issues tokens. Apps use them for about an hour and silently refresh them for days, so users are not asked again and again."
   ]],
   ["p", "That is why 'I changed my password but my phone still gets mail' happens: refresh tokens stay valid until they are revoked or expire. After a compromise, always revoke sessions."],
+  ["svg", "intune", "Conditional Access uses the device status from Intune"],
   ["h", "Sign-in logs: your best friend"],
   ["p", "Entra admin center > Users > the user > Sign-in logs. Each failed sign-in has an error code and the Conditional Access result. Common ones:"],
   ["steps", [
@@ -123,6 +128,7 @@ window.DEEPDIVES = [
     "The job goes to a port: directly to the printer's IP (TCP/IP port), or to a print server queue (\\\\printsrv\\Floor2) which forwards it.",
     "The printer prints, or shows an error (paper, toner, jam)."
   ]],
+  ["svg", "print", "The printing chain"],
   ["p", "Any link can break: spooler hung, wrong driver, printer has a new IP, print server down, printer itself in an error state. Ask: does it fail for everyone (printer/server) or one user (PC/driver)?"],
   ["h", "Print servers vs direct IP"],
   ["p", "With a print server, drivers and queues are managed centrally and pushed by GPO. Many companies now use cloud printing (Universal Print, PaperCut, 'follow-me' printing with badge release)."],
@@ -137,6 +143,7 @@ window.DEEPDIVES = [
   blocks: [
   ["h", "Two gates"],
   ["p", "Over the network a user passes two gates: share permissions and NTFS permissions. The stricter one wins. Best practice: share permission 'Everyone/Authenticated Users: Full control' or 'Change', and do the real control in NTFS."],
+  ["svg", "perms", "Two gates on the way to a file"],
   ["h", "NTFS rules"],
   ["steps", [
     "Permissions add up across all the user's groups (Read from one group + Modify from another = Modify).",
@@ -185,6 +192,7 @@ window.DEEPDIVES = [
     "Time-box: if you are 15-20 minutes into a 1st level ticket with no progress, check the KB, ask a colleague or escalate with a good note.",
     "Write the ticket note while you work, not at the end of the day."
   ]],
+  ["svg", "ticket", "Where your tickets move during the day"],
   ["h", "A good escalation note"],
   ["p", "Symptom, scope (who, how many), since when, what changed, what you checked and the results, error messages/screenshots, how to reach the user and when. The next level should never need to ask the user the same questions."],
   ["h", "Talking to users"],

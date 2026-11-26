@@ -133,3 +133,36 @@ dl.terms dt { font-weight: 700; margin-top: 10px; color: var(--navy-2); } dl.ter
 .chips button.on { background: var(--navy); color: #fff; border-color: var(--navy); }
 .hb-cat { font-size: 1rem; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); margin: 18px 0 8px; }
 .de-line { font-weight: 600; color: var(--navy-2); }
+
+/* Parts, big picture, diagrams */
+.part { display: flex; align-items: center; gap: 10px; margin: 26px 0 8px; padding: 10px 14px; background: var(--navy); color: #fff; border-radius: 8px; font-family: Cambria, Georgia, serif; font-size: 1.15rem; font-weight: 700; }
+.part:first-child { margin-top: 0; }
+.part span { background: #ffd166; color: var(--navy); border-radius: 50%; width: 28px; height: 28px; display: grid; place-items: center; font-size: .95rem; flex: none; }
+.one { font-size: 1.12rem; font-weight: 600; border-left: 4px solid #ffd166; padding: 6px 12px; background: var(--tip); border-radius: 6px; }
+table.parts th { white-space: nowrap; color: var(--navy-2); width: 1%; }
+.fig { margin: 14px 0; } .fig.card { padding: 12px; }
+.fig figcaption { color: var(--muted); font-size: .88rem; text-align: center; margin-top: 4px; }
+.diagram { width: 100%; height: auto; display: block; font-family: Calibri, Carlito, "Segoe UI", sans-serif; }
+.d-box { fill: var(--card); stroke: var(--navy-2); stroke-width: 1.6; }
+.d-box.hi { fill: var(--navy); stroke: var(--navy); }
+.d-box.soft { fill: var(--tip); stroke: var(--line); }
+.d-box.warn { fill: var(--warn); stroke: #c77d18; }
+.d-box.ok { fill: var(--eg); stroke: var(--ok); }
+.d-t { font-size: 14px; font-weight: 700; fill: var(--ink); text-anchor: middle; }
+.d-t.sub { font-weight: 400; font-size: 12.5px; }
+.d-t.hi { fill: #fff; }
+.d-l { font-size: 12.5px; fill: var(--muted); }
+.d-ft { font-size: 13px; font-weight: 700; fill: var(--navy-2); }
+.d-a { stroke: var(--navy-2); stroke-width: 1.8; fill: none; } .d-a.dash { stroke-dasharray: 5 4; }
+.d-head { fill: var(--navy-2); }
+.d-line { stroke: var(--navy-2); stroke-width: 1.6; } .d-line.soft { stroke: var(--line); stroke-width: 1.4; }
+.d-life { stroke: var(--line); stroke-width: 1.2; stroke-dasharray: 3 4; }
+.d-frame { fill: none; stroke: var(--line); stroke-width: 1.6; stroke-dasharray: 6 4; }
+.d-bus { fill: var(--navy-2); opacity: .9; }
+.d-bus + text { fill: #fff; }
+.guide-link { border-color: #ffd166; }
+.kbd { border: 1px solid var(--line); border-radius: 4px; padding: 0 5px; font-size: .9em; }
+.inst-btn { display: none; background: transparent; color: #fff; border: 1px solid rgba(255,255,255,.6); border-radius: 6px; padding: 5px 10px; font: inherit; cursor: pointer; }
+.can-install .inst-btn { display: inline-block; }
+.d-l { paint-order: stroke; stroke: var(--card); stroke-width: 5px; stroke-linejoin: round; }
+.fig:not(.card) .d-l { stroke: var(--card); }
