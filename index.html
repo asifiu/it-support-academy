@@ -5,53 +5,66 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>IT Support Academy</title>
 <meta name="description" content="8-week practical plan for IT support and system administration, with ITIL and workplace German.">
-<meta name="theme-color" content="#1b4965">
+<meta name="theme-color" content="#1b4965" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0f2b3d" media="(prefers-color-scheme: dark)">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
 <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
+<a class="skip" href="#view">Skip to content</a>
 <header class="top">
-  <button class="icon-btn menu-btn" id="menuBtn" aria-label="Open menu">&#9776;</button>
-  <a href="#/today" class="brand">IT Support Academy</a>
-  <button class="inst-btn" data-install aria-label="Install the app">Install</button>
-  <button class="de-btn" id="deBtn" aria-label="Open German panel" title="Deutsch üben">DE</button>
+  <button class="icon-btn menu-btn" id="menuBtn" aria-label="Open menu" aria-controls="nav" aria-expanded="false" data-icon="menu"></button>
+  <a href="#/today" class="brand"><img src="icons/icon.svg" alt="" width="26" height="26"><span>IT Support Academy</span></a>
+  <div class="gsearch" role="search">
+    <span data-icon="search"></span>
+    <input type="search" id="gSearch" placeholder="Search lessons, guides, fixes..." aria-label="Search the whole app" autocomplete="off">
+    <div class="gresults" id="gResults" role="listbox" hidden></div>
+  </div>
+  <button class="icon-btn search-btn" id="searchBtn" aria-label="Search" data-icon="search"></button>
+  <button class="top-btn inst-btn" data-install aria-label="Install the app"><span data-icon="download"></span><span class="lbl">Install</span></button>
+  <button class="top-btn de-btn" id="deBtn" aria-label="Open German practice panel"><span data-icon="language"></span><span class="lbl">Deutsch</span></button>
 </header>
 
-<nav class="side" id="nav">
-  <a href="#/today" data-route="today"><span>&#9673;</span>Today</a>
-  <a href="#/plan" data-route="plan"><span>&#9638;</span>8-week plan</a>
-  <a href="#/labs" data-route="labs"><span>&#9881;</span>Home lab</a>
-  <a href="#/guides" data-route="guides"><span>&#9635;</span>Software guides</a>
-  <a href="#/handbook" data-route="handbook"><span>&#9776;</span>Office handbook</a>
-  <a href="#/tickets" data-route="tickets"><span>&#9993;</span>Ticket trainer</a>
-  <a href="#/itil" data-route="itil"><span>&#9672;</span>ITIL</a>
-  <a href="#/interview" data-route="interview"><span>&#9742;</span>Interview</a>
-  <a href="#/german" data-route="german"><span>&#127465;&#127466;</span>German</a>
-  <a href="#/settings" data-route="settings"><span>&#9965;</span>Progress &amp; sync</a>
-  <a href="#/install" data-route="install"><span>&#8681;</span>Install app</a>
+<nav class="side" id="nav" aria-label="Main">
+  <p class="nav-h">Learn</p>
+  <a href="#/today" data-route="today" data-icon="home">Today</a>
+  <a href="#/plan" data-route="plan" data-icon="calendar">8-week plan</a>
+  <a href="#/guides" data-route="guides" data-icon="book">Software guides</a>
+  <a href="#/labs" data-route="labs" data-icon="lab">Home lab</a>
+  <p class="nav-h">Practise</p>
+  <a href="#/tickets" data-route="tickets" data-icon="ticket">Ticket trainer</a>
+  <a href="#/itil" data-route="itil" data-icon="badge">ITIL Foundation</a>
+  <a href="#/interview" data-route="interview" data-icon="chat">Interview</a>
+  <a href="#/german" data-route="german" data-icon="language">German</a>
+  <p class="nav-h">At work</p>
+  <a href="#/handbook" data-route="handbook" data-icon="library">Office handbook</a>
+  <p class="nav-h">App</p>
+  <a href="#/settings" data-route="settings" data-icon="sync">Progress &amp; sync</a>
+  <a href="#/install" data-route="install" data-icon="download">Install app</a>
 </nav>
 
 <main id="view" tabindex="-1"></main>
 
 <aside class="de-panel" id="dePanel" aria-label="German practice">
   <div class="de-head">
-    <strong>Deutsch für den IT-Support</strong>
-    <button class="icon-btn" id="deClose" aria-label="Close">&times;</button>
+    <span><span data-icon="language"></span><strong>Deutsch für den IT-Support</strong></span>
+    <button class="icon-btn" id="deClose" aria-label="Close German panel" data-icon="close"></button>
   </div>
   <div id="deBody"></div>
 </aside>
 <div class="scrim" id="scrim"></div>
 
-<nav class="bottom" id="bottomNav">
-  <a href="#/today" data-route="today">Today</a>
-  <a href="#/plan" data-route="plan">Plan</a>
-  <a href="#/tickets" data-route="tickets">Tickets</a>
-  <a href="#/itil" data-route="itil">ITIL</a>
-  <a href="#/handbook" data-route="handbook">Handbook</a>
+<nav class="bottom" id="bottomNav" aria-label="Quick">
+  <a href="#/today" data-route="today" data-icon="home">Today</a>
+  <a href="#/plan" data-route="plan" data-icon="calendar">Plan</a>
+  <a href="#/tickets" data-route="tickets" data-icon="ticket">Tickets</a>
+  <a href="#/itil" data-route="itil" data-icon="badge">ITIL</a>
+  <a href="#/handbook" data-route="handbook" data-icon="library">Handbook</a>
 </nav>
 
+<script src="js/icons.js"></script>
 <script src="data/diagrams.js"></script>
 <script src="data/plan.js"></script>
 <script src="data/lessons.js"></script>

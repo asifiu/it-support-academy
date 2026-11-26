@@ -93,7 +93,7 @@
     const s = e.target.closest("[data-say]");
     if (s) { e.preventDefault(); speak(s.dataset.say); }
   });
-  const sayBtn = (t) => `<button class="say" data-say="${esc(t)}" aria-label="Listen">&#128264;</button>`;
+  const sayBtn = (t) => `<button class="say" data-say="${esc(t)}" aria-label="Listen to the German">${ICON("speaker")}</button>`;
 
   /* ---------- checkbox saving (delegated) ---------- */
   document.addEventListener("change", (e) => {
@@ -168,37 +168,66 @@
     const p = position();
     if (!p) {
       const next = mondayOf(new Date(Date.now() + 7 * 86400000));
-      return `<section class="card hero"><h1>Get fit for IT support in 8 weeks</h1>
-        <p>Built from 55 real job ads in Germany. Every day: about 1 hour learning, 2 hours hands-on lab, 30 minutes ITIL, 30 minutes German.</p>
-        <label class="field">When do you start? (weeks begin on Monday)<input type="date" id="startDate" value="${isoDate(new Date().getDay() === 1 ? new Date() : next)}"></label>
-        <p class="muted">The date is set to the next Monday. You can pick any Monday you like.</p>
-        <button class="btn" id="startBtn">Start my plan</button></section>`;
+      return `<section class="card hello"><div><h1>Get fit for IT support in 8 weeks</h1>
+          <p>Built from 55 real job ads in Germany. Each day: about 1 hour learning, 2 hours hands-on lab, 30 minutes ITIL, 30 minutes German.</p></div></section>
+        <section class="card"><h2>Choose your start date</h2>
+          <label class="field">Week 1 begins on this Monday<input type="date" id="startDate" value="${isoDate(new Date().getDay() === 1 ? new Date() : next)}"></label>
+          <p class="muted small">Preset to the next Monday. Any Monday works.</p>
+          <button class="btn" id="startBtn">${ICON("play")}Start my plan</button></section>`;
     }
-    if (p.before) return `<section class="card"><h1>Your plan starts in ${p.days} day(s)</h1><p>Meanwhile: switch on Hyper-V and download the evaluation ISOs (Week 1, Day 2).</p><a class="btn" href="#/day/1/1">Read the first lesson early</a></section>`;
+    if (p.before) return `<section class="card hello"><div><h1>Your plan starts in ${p.days} day${p.days === 1 ? "" : "s"}</h1>
+      <p>Use the time to switch on Hyper-V and download the evaluation ISOs (Week 1, Day 2).</p>
+      <a class="btn" href="#/day/1/1">${ICON("book")}Read the first lesson early</a></div></section>`;
     const wk = PLAN[p.week - 1];
     const itil = ITIL.lessons[p.week - 1];
     const due = germanDue().length;
-    let main;
-    if (p.finished) main = `<section class="card"><h2>You finished the 8 weeks</h2><p>Keep going: 1 lab, 1 ticket set and 15 German minutes a day. Repeat weak quizzes.</p></section>`;
+    const pct = totalProgress();
+    const h = new Date().getHours();
+    const greet = h < 12 ? "Good morning" : h < 18 ? "Good afternoon" : "Good evening";
+    let cta, task;
+    if (p.finished) { cta = `<a class="btn" href="#/plan">${ICON("calendar")}Review the plan</a>`; task = `<section class="card task"><span class="tic">${ICON("trophy")}</span><div><h2>You finished the 8 weeks</h2><p class="muted">Keep going: 1 lab, 1 ticket set and 15 German minutes a day. Repeat weak quizzes.</p></div></section>`; }
     else if (p.dow <= 4) {
-      const d = wk.days[p.dow];
-      main = `<section class="card"><p class="kicker">Week ${wk.id}, day ${p.dow + 1}: ${esc(wk.title)}</p>
-        <h2>${esc(d.title)}</h2>${bar(dayKeys(wk.id, p.dow + 1).filter((k) => S.done[k]).length / dayKeys(wk.id, p.dow + 1).length * 100)}
-        <a class="btn" href="#/day/${wk.id}/${p.dow + 1}">Open today's lesson and lab</a></section>`;
-    } else if (p.dow === 5) main = `<section class="card"><p class="kicker">Saturday</p><h2>Week ${wk.id} test + write up your lab</h2>
-        <p>Do the quiz, then put this week's notes and screenshots in your GitHub homelab repo.</p><a class="btn" href="#/quiz/${wk.id}">Start the week ${wk.id} test</a></section>`;
-    else main = `<section class="card"><p class="kicker">Sunday</p><h2>Rest day</h2><p>Optional: 10 German cards and one ticket. Rest is part of learning.</p></section>`;
-    return `${main}
-      <div class="grid2">
-        <section class="card"><p class="kicker">ITIL this week</p><h3>${esc(itil.id)}: ${esc(itil.title)}</h3>
-          <p>${S.itil[itil.id] != null ? "Best score: " + S.itil[itil.id] : "30 minutes: read the notes, then the quiz."}</p>
-          <a class="btn ghost" href="#/itil/${esc(itil.id)}">Open ITIL lesson</a></section>
-        <section class="card"><p class="kicker">Deutsch</p><h3>${due} cards due today</h3>
-          <p>Phone phrases, instructions and IT words. Listen and repeat out loud.</p>
-          <button class="btn ghost" data-open-de>Practise now</button></section>
+      const d = wk.days[p.dow], keys = dayKeys(wk.id, p.dow + 1), doneN = keys.filter((k) => S.done[k]).length;
+      cta = `<a class="btn" href="#/day/${wk.id}/${p.dow + 1}">${ICON("play")}Continue today's lesson</a>`;
+      task = `<a class="card task" href="#/day/${wk.id}/${p.dow + 1}"><span class="tic">${ICON("book")}</span><div><p class="kicker">Today · Week ${wk.id}, day ${p.dow + 1}</p><h2>${esc(d.title)}</h2>${bar(doneN / keys.length * 100)}<p class="muted small" style="margin:0">${doneN} of ${keys.length} steps done · Lesson, lab, self-check</p></div></a>`;
+    } else if (p.dow === 5) {
+      cta = `<a class="btn" href="#/quiz/${wk.id}">${ICON("target")}Start the week ${wk.id} test</a>`;
+      task = `<a class="card task" href="#/quiz/${wk.id}"><span class="tic">${ICON("target")}</span><div><p class="kicker">Saturday</p><h2>Week ${wk.id} test and lab write-up</h2><p class="muted" style="margin:0">Do the quiz, then put this week's notes and screenshots in your GitHub homelab repo.</p></div></a>`;
+    } else {
+      cta = `<button class="btn ghost" data-open-de>${ICON("language")}10 German cards</button>`;
+      task = `<section class="card task"><span class="tic">${ICON("clock")}</span><div><p class="kicker">Sunday</p><h2>Rest day</h2><p class="muted" style="margin:0">Optional: 10 German cards and one ticket. Rest is part of learning.</p></div></section>`;
+    }
+    const names = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+    const strip = names.map((n, i) => {
+      const now = !p.finished && i === p.dow;
+      const done = i < 5 ? dayDone(wk.id, i + 1) : i === 5 ? S.quiz[wk.id] != null : false;
+      const href = i < 5 ? `#/day/${wk.id}/${i + 1}` : i === 5 ? `#/quiz/${wk.id}` : "";
+      const label = i < 5 ? "Day " + (i + 1) : i === 5 ? "Test" : "Rest";
+      const cls = [done ? "done" : "", now ? "now" : ""].join(" ").trim();
+      return href ? `<a href="${href}" class="${cls}" aria-label="${n}: ${label}${done ? ", done" : ""}">${n}<b>${done ? "✓" : label}</b></a>` : `<span class="${cls}">${n}<b>${label}</b></span>`;
+    }).join("");
+    const daysDone = PLAN.reduce((n, w) => n + w.days.filter((_, i) => dayDone(w.id, i + 1)).length, 0);
+    const tests = Object.keys(S.quiz).length;
+    const tile = (ic, val, lbl) => `<div class="card tile"><span class="tic">${ICON(ic)}</span><div><b>${val}</b><span class="lbl">${lbl}</span></div></div>`;
+    return `<section class="card hello">
+        <div><p class="kicker" style="color:rgba(255,255,255,.8)">Week ${p.week} of 8</p><h1>${greet}</h1><p>${esc(wk.title)}</p>${cta}<a class="btn ghost" href="#/plan">${ICON("calendar")}Full plan</a></div>
+        <div class="ring" style="--p:${pct}" role="img" aria-label="${pct}% of the course done"><div><span><b>${pct}%</b><br><small>complete</small></span></div></div>
+      </section>
+      <div class="sec-h"><h2>This week</h2><a href="#/plan" class="small">Week ${wk.id} details</a></div>
+      <div class="weekstrip">${strip}</div>
+      <div class="sec-h"><h2>Up next</h2></div>
+      ${task}
+      <div class="tiles">
+        ${tile("check", daysDone + "/40", "lesson days done")}
+        ${tile("target", tests + "/8", "week tests taken")}
+        ${tile("badge", S.itil.I8 != null ? S.itil.I8 + "/40" : "Not yet", "best ITIL mock")}
+        ${tile("cards", due, "German cards due")}
       </div>
-      ${isStandalone() ? "" : `<a class="card row" href="#/install" data-install><span class="wnum">&#8681;</span><span><strong>Install on your phone</strong><small>Works offline, opens like a normal app.</small></span></a>`}
-      <section class="card"><p class="kicker">Overall progress</p>${bar(totalProgress())}<p class="muted">${totalProgress()}% of all lessons and labs ticked. You are in week ${p.week} of 8.</p></section>`;
+      <div class="grid2">
+        <a class="card task" href="#/itil/${esc(itil.id)}"><span class="tic">${ICON("badge")}</span><div><p class="kicker">ITIL this week · 30 min</p><h3 style="margin:0">${esc(itil.id)}: ${esc(itil.title)}</h3>${S.itil[itil.id] != null ? `<p class="muted small" style="margin:4px 0 0">Best score: ${S.itil[itil.id]}</p>` : ""}</div></a>
+        <button class="card task" data-open-de style="text-align:left;font:inherit;color:inherit;cursor:pointer;width:100%"><span class="tic">${ICON("language")}</span><div><p class="kicker">Deutsch · 30 min</p><h3 style="margin:0">${due} cards due today</h3><p class="muted small" style="margin:4px 0 0">Phone phrases, instructions, IT words</p></div></button>
+      </div>
+      ${isStandalone() ? "" : `<a class="card row" href="#/install" style="margin-top:16px"><span class="wnum">${ICON("download")}</span><span><strong>Install on your phone</strong><small>Works offline and opens like a normal app.</small></span></a>`}`;
   };
   views.today.after = function () {
     const b = $("#startBtn");
@@ -436,7 +465,7 @@
       cats.map((c) => `<h2 class="hb-cat">${esc(c)}</h2>${rbs.filter((r) => r.cat === c).map((r) =>
         `<a class="card row" href="#/handbook/rb/${esc(r.id)}"><span><strong>${esc(r.title)}</strong><small>${esc(r.symptom)}</small></span></a>`).join("")}`).join("") +
       (dds.length ? `<h2 class="hb-cat">How it really works</h2>${dds.map((d) =>
-        `<a class="card row" href="#/handbook/dd/${esc(d.id)}"><span class="wnum">&#9881;</span><span><strong>${esc(d.title)}</strong></span></a>`).join("")}` : "");
+        `<a class="card row" href="#/handbook/dd/${esc(d.id)}"><span class="wnum">${ICON("server")}</span><span><strong>${esc(d.title)}</strong></span></a>`).join("")}` : "");
   }
   views.handbook = function (kind, id) {
     if (kind === "rb") {
@@ -451,7 +480,7 @@
         <section class="card"><h2>Ticket note template</h2><div class="cmd"><code>${esc(r.note)}</code><button class="copy" data-copy="${esc(r.note)}">Copy</button></div></section>
         <section class="card"><h2>Say it in German</h2><p class="de-line">${esc(r.de)} ${sayBtn(r.de)}</p></section>
         <section class="card note tip"><strong>Prevent it next time</strong> ${esc(r.prevent)}</section>
-        ${dd ? `<a class="card row" href="#/handbook/dd/${esc(dd.id)}"><span class="wnum">&#9881;</span><span><strong>Understand it deeply</strong><small>${esc(dd.title)}</small></span></a>` : ""}`;
+        ${dd ? `<a class="card row" href="#/handbook/dd/${esc(dd.id)}"><span class="wnum">${ICON("server")}</span><span><strong>Understand it deeply</strong><small>${esc(dd.title)}</small></span></a>` : ""}`;
     }
     if (kind === "dd") {
       const d = DEEPDIVES.find((x) => x.id === id); if (!d) return notFound();
@@ -542,8 +571,53 @@
   $("#deClose").onclick = closeDE;
   scrim.onclick = () => { closeDE(); document.body.classList.remove("nav-open"); };
   document.addEventListener("click", (e) => { const b = e.target.closest("[data-open-de]"); if (b) openDE(b.dataset.openDe); });
-  $("#menuBtn").onclick = () => { document.body.classList.toggle("nav-open"); scrim.classList.toggle("on"); };
+  $("#menuBtn").onclick = () => { const o = document.body.classList.toggle("nav-open"); scrim.classList.toggle("on", o); $("#menuBtn").setAttribute("aria-expanded", o); };
   document.addEventListener("keydown", (e) => { if (e.key === "Escape") { closeDE(); document.body.classList.remove("nav-open"); } });
+
+  /* ---------- icons in the static layout ---------- */
+  document.querySelectorAll("[data-icon]").forEach((el) => el.insertAdjacentHTML("afterbegin", ICON(el.dataset.icon)));
+
+  /* ---------- global search ---------- */
+  const INDEX = [];
+  PLAN.forEach((w) => w.days.forEach((d, i) => INDEX.push({ t: d.title, s: `Week ${w.id}, day ${i + 1}`, h: `#/day/${w.id}/${i + 1}`, ic: "calendar", k: d.title + " " + d.learn.join(" ") })));
+  (window.GUIDES || []).forEach((g) => INDEX.push({ t: g.title, s: "Software guide", h: `#/guides/${g.id}`, ic: "book", k: g.title + " " + g.short }));
+  (window.RUNBOOKS || []).forEach((r) => INDEX.push({ t: r.title, s: "Office handbook · " + r.cat, h: `#/handbook/rb/${r.id}`, ic: "library", k: r.title + " " + r.tags + " " + r.symptom }));
+  (window.DEEPDIVES || []).forEach((d) => INDEX.push({ t: d.title, s: "How it really works", h: `#/handbook/dd/${d.id}`, ic: "server", k: d.title + " " + d.tags }));
+  ITIL.lessons.forEach((l) => INDEX.push({ t: l.id + ": " + l.title, s: "ITIL Foundation", h: `#/itil/${l.id}`, ic: "badge", k: l.title + " " + l.notes.map((n) => n[0]).join(" ") }));
+  const gIn = $("#gSearch"), gOut = $("#gResults");
+  let gSel = -1;
+  function gRender() {
+    const q = gIn.value.trim().toLowerCase();
+    if (!q) { gOut.hidden = true; return; }
+    const words = q.split(/\s+/);
+    const hits = INDEX.map((x) => {
+      const hay = (x.t + " " + x.k).toLowerCase();
+      if (!words.every((w) => hay.includes(w))) return null;
+      return [x, words.reduce((n, w) => n + (x.t.toLowerCase().includes(w) ? 3 : 1), 0)];
+    }).filter(Boolean).sort((a, b) => b[1] - a[1]).slice(0, 9).map((x) => x[0]);
+    gSel = -1;
+    gOut.innerHTML = hits.length ? hits.map((x) => `<a href="${esc(x.h)}" role="option">${ICON(x.ic)}<span>${esc(x.t)}<small>${esc(x.s)}</small></span></a>`).join("")
+      : `<p class="empty">No results for "${esc(gIn.value)}". Try one word, like "vpn" or "outlook".</p>`;
+    gOut.hidden = false;
+  }
+  gIn.addEventListener("input", gRender);
+  gIn.addEventListener("focus", gRender);
+  gIn.addEventListener("keydown", (e) => {
+    const items = [...gOut.querySelectorAll("a")];
+    if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+      e.preventDefault(); if (!items.length) return;
+      gSel = (gSel + (e.key === "ArrowDown" ? 1 : -1) + items.length) % items.length;
+      items.forEach((a, i) => a.classList.toggle("on", i === gSel));
+    } else if (e.key === "Enter" && items.length) { location.hash = (items[gSel] || items[0]).getAttribute("href"); closeSearch(); }
+    else if (e.key === "Escape") closeSearch();
+  });
+  gOut.addEventListener("click", (e) => { if (e.target.closest("a")) closeSearch(); });
+  document.addEventListener("click", (e) => { if (!e.target.closest(".gsearch") && !e.target.closest("#searchBtn")) gOut.hidden = true; });
+  function closeSearch() { gOut.hidden = true; gIn.value = ""; document.body.classList.remove("search-open"); gIn.blur(); }
+  $("#searchBtn").onclick = () => { document.body.classList.toggle("search-open"); if (document.body.classList.contains("search-open")) gIn.focus(); };
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "/" && !/input|textarea|select/i.test(document.activeElement.tagName)) { e.preventDefault(); gIn.focus(); }
+  });
 
   /* ---------- router ---------- */
   function render() {

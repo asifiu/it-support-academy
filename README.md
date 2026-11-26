@@ -41,6 +41,9 @@ The plan comes from 55 real IT support and sysadmin job ads in Germany (Oct to N
 
 ## What is in the app
 
+**Design:** clean enterprise style (neutral greys, navy accent, Segoe UI, line icons), light and dark mode, side navigation on PC, bottom bar on phones, and a search box at the top that searches lessons, guides, handbook fixes and ITIL (press `/` to jump to it).
+
+
 - **Today**: what to do today, based on your start date.
 - **8-week plan**: every day has a detailed **Teach me** lesson (plain language, examples, every command explained), key points, a hands-on lab, self-check questions, free links, and a notes box.
 - **Home lab**: the VMs you build (DC01, CLIENT01, LNX01, OPNsense...) and the IP plan.
