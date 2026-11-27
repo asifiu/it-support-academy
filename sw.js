@@ -1,6 +1,6 @@
 /* Offline support: caches the app files. Bump VERSION after every content change
    so phones pick up the new lessons. */
-const VERSION = "itsa-2026-11-27-16";
+const VERSION = "itsa-2026-11-27-17";
 const FILES = [
   "./", "index.html", "css/style.css", "manifest.webmanifest", "icons/icon-v2.svg", "icons/icon-192-v2.png", "icons/icon-512-v2.png", "icons/icon-maskable-512-v2.png", "icons/apple-touch-icon-v2.png",
   "js/icons.js", "js/motion.js", "js/trainers.js", "js/ki.js", "js/app.js", "js/srs.js", "js/priority.js",

@@ -16,7 +16,7 @@ window.KI = (function () {
   let busy = false, clientP = null, rec = null, pageCtx = () => "";
 
   function client() {
-    if (!clientP) clientP = import("https://esm.sh/@anthropic-ai/sdk").then((m) => new m.default({ apiKey: cfg.key, dangerouslyAllowBrowser: true }));
+    if (!clientP) clientP = import("https://esm.sh/@anthropic-ai/sdk@1.14.0").then((m) => new m.default({ apiKey: cfg.key, dangerouslyAllowBrowser: true }));
     return clientP;
   }
 

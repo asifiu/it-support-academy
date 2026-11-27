@@ -20,6 +20,9 @@ Asif can reorder or add items at any time; the job always follows this file.
 - [ ] IT vocabulary pack: 300 workplace words by topic (hardware, network, M365, tickets, security)
 - [ ] Listening practice: short dialogues read by the speech engine with comprehension questions
 
+## Security (do first)
+- [ ] Vendor a pinned copy of @anthropic-ai/sdk 1.14.0 into js/vendor/ (npm + esbuild bundle), import it from the same origin instead of esm.sh, add it to sw.js FILES, add a CSP limiting script-src to self and connect-src to self and api.anthropic.com
+
 ## IT courses (priority 2)
 - [ ] Windows Server: DNS and DHCP in depth, file services (DFS, quotas), print server (Professional)
 - [ ] PowerShell course: from basics to automation with Graph and AD (Foundation to Senior)
