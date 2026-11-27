@@ -19,31 +19,32 @@
   <a href="#/today" class="brand" aria-label="IT Support Academy, home"><img src="icons/icon-v2.svg" alt="" width="30" height="30"><span class="wm"><b>IT Support</b> Academy</span></a>
   <div class="gsearch" role="search">
     <span data-icon="search"></span>
-    <input type="search" id="gSearch" placeholder="Search lessons, guides, fixes..." aria-label="Search the whole app" autocomplete="off">
+    <input type="search" id="gSearch" placeholder="Search lessons, guides, fixes..." data-i18n-ph="Search lessons, guides, fixes..." aria-label="Search the whole app" autocomplete="off">
     <div class="gresults" id="gResults" role="listbox" hidden></div>
   </div>
   <button class="icon-btn search-btn" id="searchBtn" aria-label="Search" data-icon="search"></button>
-  <button class="top-btn inst-btn" data-install aria-label="Install the app"><span data-icon="download"></span><span class="lbl">Install</span></button>
+  <button class="top-btn inst-btn" data-install aria-label="Install the app"><span data-icon="download"></span><span class="lbl" data-i18n="Install">Install</span></button>
   <button class="top-btn ki-btn" id="kiBtn" aria-label="Open the KI tutor"><span data-icon="spark"></span><span class="lbl">KI</span></button>
   <button class="top-btn de-btn" id="deBtn" aria-label="Open German practice panel"><span data-icon="language"></span><span class="lbl">Deutsch</span></button>
 </header>
 
 <nav class="side" id="nav" aria-label="Main">
-  <p class="nav-h">Learn</p>
-  <a href="#/today" data-route="today" data-icon="home">Today</a>
-  <a href="#/learn" data-route="learn" data-icon="target">Tracks and courses</a>
-  <a href="#/itil" data-route="itil" data-icon="badge">ITIL Foundation</a>
-  <a href="#/german" data-route="german" data-icon="language">German for IT jobs</a>
-  <p class="nav-h">Practise</p>
-  <a href="#/practice" data-route="practice" data-icon="server">Labs and trainers</a>
-  <a href="#/interview" data-route="interview" data-icon="chat">Interview</a>
-  <p class="nav-h">Reference</p>
-  <a href="#/handbook" data-route="handbook" data-icon="library">Office handbook</a>
-  <a href="#/guides" data-route="guides" data-icon="book">Software guides</a>
-  <a href="#/plan" data-route="plan" data-icon="calendar">8-week quick start</a>
-  <p class="nav-h">App</p>
-  <a href="#/settings" data-route="settings" data-icon="sync">Progress &amp; sync</a>
-  <a href="#/install" data-route="install" data-icon="download">Install app</a>
+  <p class="nav-h" data-i18n="Learn">Learn</p>
+  <a href="#/today" data-route="today" data-icon="home" data-i18n="Today">Today</a>
+  <a href="#/learn" data-route="learn" data-icon="target" data-i18n="Tracks and courses">Tracks and courses</a>
+  <a href="#/itil" data-route="itil" data-icon="badge" data-i18n="ITIL Foundation">ITIL Foundation</a>
+  <a href="#/german" data-route="german" data-icon="language" data-i18n="German for IT jobs">German for IT jobs</a>
+  <p class="nav-h" data-i18n="Practise">Practise</p>
+  <a href="#/practice" data-route="practice" data-icon="server" data-i18n="Labs and trainers">Labs and trainers</a>
+  <a href="#/interview" data-route="interview" data-icon="chat" data-i18n="Interview">Interview</a>
+  <p class="nav-h" data-i18n="Reference">Reference</p>
+  <a href="#/handbook" data-route="handbook" data-icon="library" data-i18n="Office handbook">Office handbook</a>
+  <a href="#/guides" data-route="guides" data-icon="book" data-i18n="Software guides">Software guides</a>
+  <a href="#/plan" data-route="plan" data-icon="calendar" data-i18n="8-week quick start">8-week quick start</a>
+  <p class="nav-h" data-i18n="App">App</p>
+  <a href="#/settings" data-route="settings" data-icon="sync" data-i18n="Progress & sync">Progress &amp; sync</a>
+  <a href="#/install" data-route="install" data-icon="download" data-i18n="Install app">Install app</a>
+  <div class="langsw" role="group" aria-label="Language"><button data-lang="en">EN</button><button data-lang="de">DE</button></div>
 </nav>
 
 <main id="view" tabindex="-1"></main>
@@ -65,13 +66,14 @@
 <div class="scrim" id="scrim"></div>
 
 <nav class="bottom" id="bottomNav" aria-label="Quick">
-  <a href="#/today" data-route="today" data-icon="home">Today</a>
-  <a href="#/learn" data-route="learn" data-icon="target">Learn</a>
-  <a href="#/practice" data-route="practice" data-icon="server">Practice</a>
-  <a href="#/german" data-route="german" data-icon="language">Deutsch</a>
-  <a href="#/handbook" data-route="handbook" data-icon="library">Handbook</a>
+  <a href="#/today" data-route="today" data-icon="home" data-i18n="Today">Today</a>
+  <a href="#/learn" data-route="learn" data-icon="target" data-i18n="Learn">Learn</a>
+  <a href="#/practice" data-route="practice" data-icon="server" data-i18n="Practice">Practice</a>
+  <a href="#/german" data-route="german" data-icon="language" data-i18n="Deutsch">Deutsch</a>
+  <a href="#/handbook" data-route="handbook" data-icon="library" data-i18n="Handbook">Handbook</a>
 </nav>
 
+<script src="js/i18n.js"></script>
 <script src="js/icons.js"></script>
 <script src="js/motion.js"></script>
 <script src="js/trainers.js"></script>
@@ -83,6 +85,7 @@
 <script src="data/german.js"></script>
 <script src="data/deutsch-a2.js"></script>
 <script src="data/deutsch-b1.js"></script>
+<script src="data/deutsch-verbs.js"></script>
 <script src="data/tickets.js"></script>
 <script src="data/interview.js"></script>
 <script src="data/runbooks.js"></script>
@@ -93,6 +96,7 @@
 <script src="data/courses-net.js"></script>
 <script src="data/courses-azure-linux.js"></script>
 <script src="data/courses-senior.js"></script>
+<script src="data/courses-cases.js"></script>
 <script src="data/tracks.js"></script>
 <script src="js/srs.js"></script>
 <script src="js/priority.js"></script>

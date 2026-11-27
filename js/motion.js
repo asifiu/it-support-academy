@@ -24,15 +24,15 @@ window.MOTION = (function () {
 
   /* Page entrance: content rises in softly. */
   function page(el) {
-    return animate(el, [{ opacity: 0, transform: "translateY(10px)" }, { opacity: 1, transform: "none" }], { duration: T.base });
+    return animate(el, [{ opacity: 0, transform: "translateY(6px)" }, { opacity: 1, transform: "none" }], { duration: 180 });
   }
 
   /* Step change in the lesson player. dir = 1 (next) or -1 (back). */
   function step(el, dir) {
     const x = 28 * dir;
     return animate(el, [
-      { opacity: 0, transform: `translateX(${x}px)`, filter: "blur(2px)" },
-      { opacity: 1, transform: "none", filter: "none" }
+      { opacity: 0, transform: `translateX(${x}px)` },
+      { opacity: 1, transform: "none" }
     ], { duration: T.step });
   }
 
@@ -110,5 +110,22 @@ window.MOTION = (function () {
     return animate(el, [{ transform: "perspective(900px) rotateY(-88deg)", opacity: .2 }, { transform: "perspective(900px) rotateY(0)", opacity: 1 }], { duration: 420, easing: E.out });
   }
 
-  return { T, E, reduce, animate, page, step, stagger, countUp, grow, pop, shake, draw, flip };
+  /* Apple-style push: deeper pages slide in from the right, going back from the left, with a soft spring. */
+  function push(el, dir) {
+    if (!dir) return page(el);
+    return animate(el, [{ opacity: 0, transform: `translateX(${dir * 36}px)` }, { opacity: 1, transform: "none" }], { duration: 340, easing: "cubic-bezier(.22,1.25,.36,1)" });
+  }
+  /* Google-style ripple from the touch point on any interactive surface. */
+  const RIPPLE = ".btn, .go, a.card, button.card, .chip, .artbtn, .side a, .bottom a, .pl-count, .pl-ki, .icon-btn, .top-btn, .copy, .fig-zoom, .tabs button, .mtile";
+  document.addEventListener("pointerdown", (e) => {
+    if (reduce() || e.button > 0) return;
+    const host = e.target.closest(RIPPLE); if (!host || host.disabled) return;
+    const r = host.getBoundingClientRect(), size = Math.max(r.width, r.height) * 2.2;
+    const dot = document.createElement("span"); dot.className = "ripple";
+    dot.style.cssText = `width:${size}px;height:${size}px;left:${e.clientX - r.left - size / 2}px;top:${e.clientY - r.top - size / 2}px`;
+    if (getComputedStyle(host).position === "static") host.style.position = "relative";
+    host.classList.add("has-ripple"); host.appendChild(dot);
+    dot.animate([{ transform: "scale(0)", opacity: .35 }, { transform: "scale(1)", opacity: 0 }], { duration: 520, easing: "cubic-bezier(.2,.8,.2,1)" }).onfinish = () => dot.remove();
+  }, { passive: true });
+  return { T, E, reduce, animate, push, page, step, stagger, countUp, grow, pop, shake, draw, flip };
 })();

@@ -5,10 +5,10 @@
 
   /* ---------- state ---------- */
   const KEY = "itsa-v1";
-  const blank = { start: null, done: {}, quiz: {}, itil: {}, cards: {}, tickets: {}, notes: {}, pos: {} };
+  const blank = { start: null, done: {}, quiz: {}, itil: {}, cards: {}, tickets: {}, notes: {}, pos: {}, days: {}, xp: 0 };
   /* Keep only well-formed values, so an edited or foreign progress file cannot inject HTML. */
   function clean(d) {
-    const out = { start: null, done: {}, quiz: {}, itil: {}, cards: {}, tickets: {}, notes: {}, pos: {} };
+    const out = { start: null, done: {}, quiz: {}, itil: {}, cards: {}, tickets: {}, notes: {}, pos: {}, days: {}, xp: 0 };
     if (!d || typeof d !== "object") return out;
     const obj = (o) => (o && typeof o === "object" && !Array.isArray(o) ? o : {});
     const safeKey = (k) => /^[A-Za-z0-9-]{1,40}$/.test(k);
@@ -17,6 +17,8 @@
     for (const [k, v] of Object.entries(obj(d.done))) if (safeKey(k) && v === true) out.done[k] = true;
     for (const f of ["quiz", "itil", "tickets"]) for (const [k, v] of Object.entries(obj(d[f]))) if (safeKey(k) && num(v)) out[f][k] = v;
     for (const [k, v] of Object.entries(obj(d.cards))) if (safeKey(k) && v && num(v.box) && num(v.due)) out.cards[k] = { box: v.box, due: v.due };
+    for (const [k, v] of Object.entries(obj(d.days))) if (/^\d{4}-\d{2}-\d{2}$/.test(k) && v === 1) out.days[k] = 1;
+    if (Number.isInteger(d.xp) && d.xp >= 0 && d.xp < 1e7) out.xp = d.xp;
     for (const [k, v] of Object.entries(obj(d.pos))) if (/^[A-Za-z0-9:-]{1,40}$/.test(k) && Number.isInteger(v) && v >= 0 && v < 500) out.pos[k] = v;
     for (const [k, v] of Object.entries(obj(d.notes))) if (safeKey(k) && typeof v === "string") out.notes[k] = v.slice(0, 20000);
     return out;
@@ -24,7 +26,12 @@
   let S;
   try { S = clean(JSON.parse(localStorage.getItem(KEY) || "{}")); }
   catch (e) { S = clean(null); }
-  const save = () => localStorage.setItem(KEY, JSON.stringify(S));
+  let lastXp = null;
+  const save = () => {
+    const d = new Date(); S.days[d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0")] = 1;
+    localStorage.setItem(KEY, JSON.stringify(S));
+    if (window.GAME) { const x = GAME.xp(); if (lastXp != null && x > lastXp) GAME.toast(x - lastXp); lastXp = x; }
+  };
 
   /* ---------- helpers ---------- */
   const $ = (sel, el = document) => el.querySelector(sel);
@@ -208,12 +215,12 @@
     host.innerHTML = `<div class="player">
       <div class="pl-head">
         <div class="pl-bar" role="progressbar" aria-label="Lesson progress" aria-valuemin="1" aria-valuemax="${n}"><i></i></div>
-        <button class="pl-ki" data-open-ki="${cfg.kiMode || "it"}" aria-label="Ask the KI tutor about this step">${ICON("spark")}<span>Ask KI</span></button>
+        <button class="pl-ki" data-open-ki="${cfg.kiMode || "it"}" aria-label="Ask the KI tutor about this step">${ICON("spark")}<span>${T("Ask KI")}</span></button>
         <button class="pl-count" aria-expanded="false" aria-controls="plToc"></button>
         <ol class="pl-toc" id="plToc" hidden>${steps.map((st, j) => `<li><button data-go="${j}"><span class="pl-dot"></span><span>${esc(st.title)}</span></button></li>`).join("")}</ol>
       </div>
       <article class="pl-step" tabindex="-1"></article>
-      <div class="pl-nav"><button class="btn ghost pl-back">${ICON("chevron", "flip")}<span>Back</span></button><button class="go pl-next"><span class="lbl"></span><span class="dot">${ICON("arrowRight")}</span></button></div>
+      <div class="pl-nav"><button class="btn ghost pl-back">${ICON("chevron", "flip")}<span>${T("Back")}</span></button><button class="go pl-next"><span class="lbl"></span><span class="dot">${ICON("arrowRight")}</span></button></div>
     </div>`;
     const art = host.querySelector(".pl-step"), bar = host.querySelector(".pl-bar"), barI = bar.querySelector("i");
     const count = host.querySelector(".pl-count"), toc = host.querySelector(".pl-toc");
@@ -223,10 +230,10 @@
       S.pos[cfg.key] = i; save();
       art.innerHTML = `${st.label ? `<p class="pl-label">${esc(st.label)}</p>` : ""}<h2 class="pl-title">${esc(st.title)}</h2><div class="lesson pl-body">${st.html}</div>`;
       barI.style.width = ((i + 1) / n * 100) + "%"; bar.setAttribute("aria-valuenow", i + 1);
-      count.innerHTML = `Step <b>${i + 1}</b> of ${n}${ICON("chevron", "down")}`;
+      count.innerHTML = `${T("Step")} <b>${i + 1}</b> ${T("of")} ${n}${ICON("chevron", "down")}`;
       toc.querySelectorAll("li").forEach((li, j) => { li.classList.toggle("now", j === i); li.classList.toggle("seen", j < i); });
       back.disabled = i === 0;
-      next.querySelector(".lbl").textContent = i === n - 1 ? (cfg.finishLabel || "Finish") : "Next";
+      next.querySelector(".lbl").textContent = i === n - 1 ? T(cfg.finishLabel || "Finish") : T("Next");
       next.classList.toggle("finish", i === n - 1);
       if (st.after) st.after(art);
       art.querySelectorAll("svg.diagram").forEach((g) => MOTION.draw(g));
@@ -284,7 +291,8 @@
           <h1>Learn it, practise it, get the job</h1><p class="sub">Three career tracks, ${COURSES.length} courses from foundation to senior level, Cisco and Microsoft exam topics, hands-on labs and German for the workplace.</p>
           <a class="go" href="#/learn"><span class="dot">${ICON("target")}</span>Open the career tracks<span class="chev">${ICON("chevrons")}</span></a></div>
           <div class="gauge"><small>${esc(tp[0].title)} track</small><b><span class="num" data-to="${tp[1]}">${tp[1]}</span>%</b>${bar(tp[1])}<div class="scale"><span>0</span><span>${esc(tp[0].certs[0])}</span></div></div></section>
-        <div class="sec-h"><h2>Pick up from here</h2></div>
+        ${GAME.card()}
+        <div class="sec-h"><h2>${T("Pick up from here")}</h2></div>
         <div class="bento">${continueCard()}
           <a class="card task wide" href="#/practice"><span class="tic">${ICON("server")}</span><span class="corner">${ICON("arrowRight")}</span><p class="pl-label">Practice</p><h3>Cisco CLI labs and subnetting</h3><p class="muted small" style="margin:0">Type real commands; every task is checked live</p></a>
           <button class="card task wide" data-open-de style="text-align:left;font:inherit;cursor:pointer;width:100%"><span class="tic">${ICON("language")}</span><span class="corner">${ICON("expand")}</span><p class="pl-label">Deutsch</p><h3>${germanDue().length} German cards due</h3><p class="muted small" style="margin:0">Workplace phrases with spaced repetition</p></button>
@@ -298,7 +306,7 @@
     const due = germanDue().length;
     const pct = totalProgress();
     const h = new Date().getHours();
-    const greet = h < 12 ? "Good morning" : h < 18 ? "Good afternoon" : "Good evening";
+    const greet = T(h < 12 ? "Good morning" : h < 18 ? "Good afternoon" : "Good evening");
     const daysDone = PLAN.reduce((n, w) => n + w.days.filter((_, i) => dayDone(w.id, i + 1)).length, 0);
     let headline, sub, cta;
     if (p.finished) { headline = "You finished all 8 weeks"; sub = "Keep one lab, one ticket set and 15 German minutes a day."; cta = go("#/plan", "calendar", "Review the plan"); }
@@ -325,9 +333,10 @@
           <small>Course progress</small><b><span class="num" data-to="${pct}">${pct}</span>%</b>${bar(pct)}<div class="scale"><span>0</span><span>${daysDone} of 40 days</span></div>
         </div>
       </section>
-      <div class="sec-h"><h2>This week</h2><a href="#/plan">Open the plan</a></div>
+      <div class="sec-h"><h2>${T("This week")}</h2><a href="#/plan">${T("Open the plan")}</a></div>
       <div class="weekstrip">${strip}</div>
-      <div class="sec-h"><h2>Your routine</h2></div>
+      ${GAME.card()}
+      <div class="sec-h"><h2>${T("Your routine")}</h2></div>
       <div class="bento">
         ${continueCard()}
         <a class="card task wide" href="#/itil/${esc(itil.id)}"><span class="tic">${ICON("badge")}</span><span class="corner">${ICON("expand")}</span>
@@ -519,6 +528,126 @@
       <section class="card"><h2>German interview phrases</h2><p>Open the German panel: deck 'Vorstellungsgespräch'.</p><button class="btn ghost" data-open-de="interview">Practise in German</button></section>`;
   };
 
+
+  /* ---------- Deutsch Arcade: quick games that give XP ---------- */
+  const GAMES = [
+    { id: "artikel", t: "Der-Die-Das Blitz", d: "60 seconds. Tap the right article. Streaks multiply your points.", ic: "target" },
+    { id: "memory", t: "Memory", d: "Flip cards and match German with English.", ic: "cards" },
+    { id: "diktat", t: "Hör-Diktat", d: "Listen to a sentence and type what you hear.", ic: "speaker" },
+    { id: "verben", t: "Verb-Rennen", d: "Präsens, Präteritum, Perfekt with haben or sein. Go fast.", ic: "play" },
+    { id: "satz", t: "Satz-Baumeister", d: "Build sentences in the right order against the clock.", ic: "grid" }
+  ];
+  const arcBest = (id) => +(localStorage.getItem("itsa-arc-" + id) || 0);
+  function nounPool() {
+    const out = [], seen = new Set();
+    const add = (raw, en) => { const m = String(raw).match(/^(der|die|das)\s+([A-ZÄÖÜ][\wäöüß-]*)/); if (m && !seen.has(m[2])) { seen.add(m[2]); out.push({ art: m[1], w: m[2], en }); } };
+    (window.DEUTSCH ? DEUTSCH.levels : []).forEach((l) => l.units.forEach((u) => u.vocab.forEach((v) => add(v[0], v[1]))));
+    GERMAN.decks.forEach((d) => d.cards.forEach((c) => add(c[0], c[1])));
+    return out;
+  }
+  function sentencePool() {
+    const out = [];
+    (window.DEUTSCH ? DEUTSCH.levels : []).forEach((l) => l.units.forEach((u) => { u.vocab.forEach((v) => { if (v[2] && v[2].split(" ").length >= 4 && v[2].split(" ").length <= 9) out.push(v[2]); }); u.drills.forEach((d) => d.order && out.push(d.a)); }));
+    return out;
+  }
+  views.arcade = function () {
+    return `<p class="kicker"><a href="#/german">Deutsch</a></p><h1 class="page-title">${T("Deutsch Arcade")}</h1><p class="muted lead-p">Short, fast games. Every point is XP. Play two a day and the words stay forever.</p>
+      <div class="cgrid">${GAMES.map((g) => `<a class="card ccard game" href="#/game/${g.id}"><span class="tic">${ICON(g.ic)}</span><h3>${esc(g.t)}</h3><p class="muted small">${esc(g.d)}</p><div class="cmeta"><span>${ICON("trophy")}Best: ${arcBest(g.id)}</span></div></a>`).join("")}</div>`;
+  };
+  views.arcade.after = function () { MOTION.stagger(view.querySelectorAll(".game"), 50); };
+  views.game = function (id) {
+    const g = GAMES.find((x) => x.id === id); if (!g) return notFound();
+    return `<p class="kicker"><a href="#/arcade">Deutsch Arcade</a></p><h1 class="page-title">${esc(g.t)}</h1><div id="game" class="gamebox"></div>`;
+  };
+  views.game.after = function (id) {
+    const box = $("#game"), g = GAMES.find((x) => x.id === id); if (!g) return;
+    const hud = (extra) => `<div class="hud"><span>Score <b class="hs">0</b></span>${extra || ""}<span>Best <b>${arcBest(id)}</b></span></div>`;
+    const finish = (score, note) => {
+      const best = arcBest(id), rec = score > best; if (rec) localStorage.setItem("itsa-arc-" + id, score);
+      if (score > 0) { S.xp = (S.xp || 0) + score; save(); }
+      box.innerHTML = `<div class="done-hero"><span class="done-mark">${ICON("trophy")}</span><p><b>${score} points</b>${rec ? " • new record!" : ""}</p><p class="muted">${esc(note || "")}</p></div>
+        <p style="text-align:center"><button class="btn" id="again">${T("Play again")}</button> <a class="btn ghost" href="#/arcade">${T("Other games")}</a></p>`;
+      MOTION.pop(box.querySelector(".done-mark")); box.querySelector("#again").onclick = () => views.game.after(id);
+    };
+    const timer = (sec, onEnd) => {
+      const bar = box.querySelector(".tbar i"); let left = sec * 1000; const t0 = performance.now();
+      const tick = (now) => { if (!box.isConnected) return; left = sec * 1000 - (now - t0); if (bar) bar.style.width = Math.max(0, left / (sec * 10)) + "%"; if (left <= 0) onEnd(); else box._raf = requestAnimationFrame(tick); };
+      cancelAnimationFrame(box._raf); box._raf = requestAnimationFrame(tick);
+    };
+    if (id === "artikel") {
+      const pool = shuffled(nounPool()); let i = 0, score = 0, combo = 0, over = false;
+      box.innerHTML = hud(`<span>Combo <b class="hc">x1</b></span>`) + `<div class="tbar"><i></i></div><div class="gq"></div><div class="arts">${["der", "die", "das"].map((a) => `<button class="artbtn a-${a}" data-a="${a}">${a}</button>`).join("")}</div><p class="gfb2 muted"></p>`;
+      const q = box.querySelector(".gq"), fb = box.querySelector(".gfb2");
+      const show = () => { const n = pool[i % pool.length]; q.innerHTML = `<span class="gw">${esc(n.w)}</span><small>${esc(n.en)}</small>`; MOTION.animate(q, [{ transform: "scale(.92)", opacity: 0 }, { transform: "none", opacity: 1 }], { duration: 200, easing: MOTION.E.spring }); };
+      box.querySelectorAll(".artbtn").forEach((b) => b.onclick = () => {
+        if (over) return; const n = pool[i % pool.length], ok = b.dataset.a === n.art;
+        if (ok) { combo++; score += 10 * Math.min(1 + Math.floor(combo / 3), 4); MOTION.pop(b); fb.textContent = ""; } else { combo = 0; MOTION.shake(b); fb.innerHTML = `<b>${n.art}</b> ${esc(n.w)}`; }
+        box.querySelector(".hs").textContent = score; box.querySelector(".hc").textContent = "x" + Math.min(1 + Math.floor(combo / 3), 4); i++; show();
+      });
+      show(); timer(60, () => { over = true; finish(score, "Tip: learn nouns always with their article, like one word: der Rechner."); });
+    } else if (id === "memory") {
+      const pick = shuffled(nounPool()).slice(0, 6);
+      const tiles = shuffled(pick.flatMap((n, k) => [{ k, txt: n.art + " " + n.w }, { k, txt: n.en.split(",")[0] }]));
+      let open = [], found = 0, moves = 0, lock = false; const t0 = Date.now();
+      box.innerHTML = hud(`<span>Moves <b class="hm">0</b></span>`) + `<div class="mgrid">${tiles.map((t, j) => `<button class="mtile" data-j="${j}"><span class="mfront">?</span><span class="mback">${esc(t.txt)}</span></button>`).join("")}</div>`;
+      box.querySelectorAll(".mtile").forEach((b) => b.onclick = () => {
+        if (lock || b.classList.contains("open")) return; b.classList.add("open"); open.push(b);
+        if (open.length === 2) { moves++; box.querySelector(".hm").textContent = moves; const [a, c] = open; lock = true;
+          if (tiles[a.dataset.j].k === tiles[c.dataset.j].k) { setTimeout(() => { a.classList.add("matched"); c.classList.add("matched"); MOTION.pop(a); MOTION.pop(c); open = []; lock = false; found++;
+            if (found === 6) { const sec = Math.round((Date.now() - t0) / 1000); finish(Math.max(20, 200 - moves * 6 - sec), `${moves} moves in ${sec} seconds.`); } }, 250); }
+          else setTimeout(() => { a.classList.remove("open"); c.classList.remove("open"); open = []; lock = false; }, 800);
+        }
+      });
+    } else if (id === "diktat") {
+      const pool = shuffled(sentencePool()).slice(0, 5); let i = 0, score = 0;
+      const round = () => {
+        if (i >= pool.length) return finish(score, "Listening every day is the fastest way to understand colleagues on the phone.");
+        const sent = pool[i];
+        box.innerHTML = hud(`<span>Satz <b>${i + 1}/5</b></span>`) + `<div class="dk"><button class="btn big-play" id="play">${ICON("speaker")}Play</button><button class="btn ghost" id="slow">Slower</button>
+          <textarea id="dkin" rows="2" placeholder="Type what you hear..." autocapitalize="sentences"></textarea><button class="btn" id="dkok">Check</button><div class="dkres"></div></div>`;
+        box.querySelector(".hs").textContent = score;
+        const say = (rate) => { if (!("speechSynthesis" in window)) return; speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(sent); u.lang = "de-DE"; u.rate = rate; const v = speechSynthesis.getVoices().find((x) => x.lang && x.lang.startsWith("de")); if (v) u.voice = v; speechSynthesis.speak(u); };
+        box.querySelector("#play").onclick = () => say(.95); box.querySelector("#slow").onclick = () => say(.7); say(.95);
+        box.querySelector("#dkok").onclick = () => {
+          const clean = (x) => x.toLowerCase().replace(/[.,!?;:]/g, "").split(/\s+/).filter(Boolean);
+          const want = clean(sent), got = clean(box.querySelector("#dkin").value); let right = 0;
+          const marked = sent.split(/\s+/).map((w, k) => { const ok = got[k] === clean(w)[0]; if (ok) right++; return `<span class="${ok ? "wok" : "wno"}">${esc(w)}</span>`; }).join(" ");
+          const pts = Math.round(right / want.length * 30); score += pts;
+          box.querySelector(".dkres").innerHTML = `<p class="dkline">${marked}</p><p class="muted small">+${pts} points</p><button class="btn" id="dknext">Next</button>`;
+          box.querySelector("#dknext").onclick = () => { i++; round(); };
+        };
+      };
+      round();
+    } else if (id === "verben") {
+      const P = ["ich", "du", "er/sie/es", "wir", "ihr", "sie/Sie"]; let score = 0, n = 0, over = false;
+      box.innerHTML = hud(`<span>Streak <b class="hc">0</b></span>`) + `<div class="tbar"><i></i></div><div class="gq"></div><input id="vin" class="vin" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Type the form..."><p class="gfb2 muted"></p>`;
+      const q = box.querySelector(".gq"), inp = box.querySelector("#vin"), fb = box.querySelector(".gfb2"); let cur, streakN = 0;
+      const next = () => { const v = VERBS[Math.floor(Math.random() * VERBS.length)], kind = ["pr", "pr", "pt", "pf"][Math.floor(Math.random() * 4)], p = Math.floor(Math.random() * 6);
+        cur = kind === "pr" ? { a: v[2][p], q: `${P[p]} ___`, h: "Präsens" } : kind === "pt" ? { a: v[3], q: `er ___`, h: "Präteritum" } : { a: v[4] + " " + v[5], q: `er ___ ___`, h: "Perfekt (haben or sein + Partizip)" };
+        q.innerHTML = `<span class="gw">${esc(v[0])}</span><small>${esc(v[1])} • ${cur.h}</small><span class="vq2">${esc(cur.q)}</span>`; inp.value = ""; inp.focus({ preventScroll: true });
+        MOTION.animate(q, [{ transform: "translateX(20px)", opacity: 0 }, { transform: "none", opacity: 1 }], { duration: 180 }); };
+      inp.addEventListener("keydown", (e) => { if (e.key !== "Enter" || over) return; e.preventDefault(); n++;
+        const ok = inp.value.trim().toLowerCase().replace(/\s+/g, " ") === cur.a.toLowerCase();
+        if (ok) { streakN++; score += 10 + Math.min(streakN, 10) * 2; fb.textContent = "Richtig!"; MOTION.pop(q); } else { streakN = 0; fb.innerHTML = `Richtig wäre: <b>${esc(cur.a)}</b>`; MOTION.shake(inp); }
+        box.querySelector(".hs").textContent = score; box.querySelector(".hc").textContent = streakN; next(); });
+      next(); timer(75, () => { over = true; finish(score, `${n} verbs answered. Watch out for sein in the Perfekt: gehen, fahren, kommen, bleiben, passieren.`); });
+    } else if (id === "satz") {
+      const pool = shuffled(sentencePool()).slice(0, 6); let i = 0, score = 0; const t0 = Date.now();
+      const round = () => {
+        if (i >= pool.length) { const sec = Math.round((Date.now() - t0) / 1000); return finish(score + Math.max(0, 120 - sec), `Finished in ${sec} seconds.`); }
+        const words = pool[i].split(" ");
+        box.innerHTML = hud(`<span>Satz <b>${i + 1}/${pool.length}</b></span>`) + `<div class="ord"><div class="ord-line"></div><div class="ord-bank">${shuffled(words).map((w) => `<button class="chip" data-w="${esc(w)}">${esc(w)}</button>`).join("")}</div><div class="ord-act"><button class="btn ghost" id="skip">Skip</button><span class="ord-fb"></span></div></div>`;
+        box.querySelector(".hs").textContent = score;
+        const line = box.querySelector(".ord-line");
+        box.querySelector(".ord-bank").onclick = (e) => { const b = e.target.closest(".chip"); if (!b || b.disabled) return; const c = b.cloneNode(true); c.onclick = () => { c.remove(); b.disabled = false; }; b.disabled = true; line.appendChild(c);
+          if (line.children.length === words.length) { const ok = [...line.children].map((x) => x.dataset.w).join(" ") === pool[i];
+            box.querySelector(".ord-fb").textContent = ok ? "Richtig!" : pool[i]; (ok ? MOTION.pop : MOTION.shake)(line); if (ok) score += 25; setTimeout(() => { i++; round(); }, ok ? 600 : 1800); } };
+        box.querySelector("#skip").onclick = () => { i++; round(); };
+      };
+      round();
+    }
+  };
+
   /* ---------- German course ---------- */
   const DL = (window.DEUTSCH && DEUTSCH.levels) || [];
   const PLANNED = [["A1.1", "A1", "Greetings, family, shopping, flat, daily routine, free time"], ["A1.2", "A1", "Health, directions, travel, weather, clothes, celebrations"],
@@ -534,15 +663,16 @@
     return `<h1 class="page-title">Deutsch für den Beruf</h1><p class="muted lead-p">Lesson by lesson: words, grammar, exercises and your own sentences. Each level is harder than the one before. Speak with the KI partner at your level whenever you like.</p>
       <div class="bento">
         ${next ? `<a class="card task wide cont" href="#/dunit/${esc(next.id)}"><span class="tic">${ICON("play")}</span><span class="corner">${ICON("arrowRight")}</span><p class="pl-label">Continue</p><h3>${esc(unitById(next.id).level)} Lektion ${next.n}: ${esc(next.title)}</h3><p class="muted small" style="margin:0">${esc(next.goal)}</p></a>` : ""}
+        <a class="card task wide" href="#/arcade"><span class="tic">${ICON("target")}</span><span class="corner">${ICON("arrowRight")}</span><p class="pl-label">Deutsch Arcade</p><h3>Play: der/die/das, Memory, Diktat, Verben</h3><p class="muted small" style="margin:0">Fast games, every point is XP</p></a>
         <button class="card task wide" data-open-ki="de" style="text-align:left;font:inherit;cursor:pointer;width:100%"><span class="tic">${ICON("mic")}</span><span class="corner">${ICON("spark")}</span><p class="pl-label">KI-Gesprächspartner</p><h3>Speak and write with corrections</h3><p class="muted small" style="margin:0">Stays at your level, asks you questions, corrects every mistake</p></button>
         <button class="card task wide" data-open-de style="text-align:left;font:inherit;cursor:pointer;width:100%"><span class="tic">${ICON("cards")}</span><span class="corner">${ICON("expand")}</span><p class="pl-label">Flashcards</p><h3>${germanDue().length} cards due today</h3><p class="muted small" style="margin:0">Words from your lessons plus workplace phrases</p></button>
         <a class="card task wide" href="#/handbook"><span class="tic">${ICON("chat")}</span><span class="corner">${ICON("arrowRight")}</span><p class="pl-label">At work</p><h3>German phrases for real tickets</h3><p class="muted small" style="margin:0">Every handbook fix has a sentence for the user</p></a>
       </div>
-      <div class="sec-h"><h2>Levels</h2><span class="muted small">A1 to B2</span></div>
+      <div class="sec-h"><h2>${T("Levels")}</h2><span class="muted small">A1 to B2</span></div>
       <div class="levels">${rows.map((r) => r.l ? `<section class="card lvlcard"><div class="lvlhead"><span class="lvlbadge">${esc(r.l.id)}</span><div><h3>${esc(r.l.title)}</h3><p class="muted small">${esc(r.l.note)}</p></div><span class="cpct2">${levelPct(r.l)}%</span></div>
           <div class="cprog"><i style="width:${levelPct(r.l)}%"></i></div>
           <ol class="units">${r.l.units.map((u) => `<li><a href="#/dunit/${esc(u.id)}" class="${unitDone(u) ? "done" : ""}"><span class="pn">${unitDone(u) ? ICON("check") : u.n}</span><span><strong>${esc(u.title)}</strong><small>${esc(u.grammar.map((g) => g.t).join(" • "))}</small></span></a></li>`).join("")}</ol></section>`
-        : `<section class="card lvlcard soon"><div class="lvlhead"><span class="lvlbadge">${esc(r.p[0])}</span><div><h3>${esc(r.p[0])}</h3><p class="muted small">${esc(r.p[2])}</p></div><span class="lvl">Being written</span></div></section>`).join("")}</div>`;
+        : `<section class="card lvlcard soon"><div class="lvlhead"><span class="lvlbadge">${esc(r.p[0])}</span><div><h3>${esc(r.p[0])}</h3><p class="muted small">${esc(r.p[2])}</p></div><span class="lvl">${T("Being written")}</span></div></section>`).join("")}</div>`;
   };
   views.german.after = function () { MOTION.stagger(view.querySelectorAll(".bento > .card, .lvlcard"), 40); };
 
@@ -668,6 +798,7 @@
 
   views.settings = function () {
     return `<h1>Progress &amp; sync</h1>
+      <section class="card"><h2>${T("Language")}</h2><p class="muted">Menus and buttons. Course content is translated step by step.</p><div class="langsw big"><button data-lang="en" class="${I18N.lang === "en" ? "on" : ""}">English</button><button data-lang="de" class="${I18N.lang === "de" ? "on" : ""}">Deutsch</button></div></section>
       <section class="card"><h2>Start date</h2><label class="field">Week 1 Monday<input type="date" id="sStart" value="${esc(S.start || "")}"></label><button class="btn ghost" id="sSave">Save date</button></section>
       <section class="card"><h2>Move progress between PC and phone</h2>
         <p>Progress lives on each device. To move it: Export here, send the file to yourself, Import on the other device.</p>
@@ -695,6 +826,97 @@
   };
 
 
+
+  /* ---------- Game layer: XP, ranks, streak, badges ---------- */
+  window.GAME = (function () {
+    const RANKS = [[0, "Ping"], [300, "Packet Pusher"], [800, "Help Desk Hero"], [1600, "Ticket Tamer"], [2800, "Root Cause Ranger"], [4500, "Sysadmin Sage"], [6500, "Network Ninja"], [9000, "Cloud Captain"], [12000, "Infrastructure Legend"]];
+    function xp() {
+      let x = S.xp || 0;
+      (window.COURSES || []).forEach((c) => c.modules.forEach((m) => { const k = `c-${c.id}-${m.id}`; if (S.done[k]) x += 100; x += (S.quiz[k] || 0) * 10; }));
+      (window.DEUTSCH ? DEUTSCH.levels : []).forEach((l) => l.units.forEach((u) => { if (S.done["de-" + u.id]) x += 120; x += (S.quiz["de-" + u.id] || 0) * 10; }));
+      Object.keys(S.done).forEach((k) => { if (k.startsWith("lab-")) x += 150; else if (/^\d+-\d+-(teach|learn|lab|check)$/.test(k)) x += 25; });
+      Object.values(S.itil).forEach((v) => { x += v * 10; });
+      Object.values(S.tickets).forEach((v) => { x += v * 10; });
+      return x;
+    }
+    function rank(x) {
+      let i = 0; while (i + 1 < RANKS.length && x >= RANKS[i + 1][0]) i++;
+      const next = RANKS[i + 1];
+      return { level: i + 1, name: RANKS[i][1], from: RANKS[i][0], to: next ? next[0] : null, next: next ? next[1] : null };
+    }
+    const iso = (d) => d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+    function streak() {
+      const d = new Date(); let n = 0;
+      if (!S.days[iso(d)]) d.setDate(d.getDate() - 1);
+      while (S.days[iso(d)]) { n++; d.setDate(d.getDate() - 1); }
+      return n;
+    }
+    function badges() {
+      const done = Object.keys(S.done), mods = done.filter((k) => k.startsWith("c-")).length, des = done.filter((k) => k.startsWith("de-")).length, labs = done.filter((k) => k.startsWith("lab-")).length;
+      const best = +(localStorage.getItem("itsa-subnet-best") || 0), st = streak();
+      return [
+        ["First steps", "Finish your first module", mods >= 1], ["Bookworm", "Finish 10 modules", mods >= 10], ["Half-way hero", "Finish 25 modules", mods >= 25],
+        ["Hello, CLI", "Complete a Cisco lab", labs >= 1], ["Config wizard", "Complete all four Cisco labs", labs >= 4],
+        ["Subnet sniper", "10 subnets right in a row", best >= 10], ["Deutsch-Starter", "Finish a German lesson", des >= 1], ["Sprachtalent", "Finish 7 German lessons", des >= 7],
+        ["On fire", "3-day streak", st >= 3], ["Unstoppable", "7-day streak", st >= 7], ["Habit formed", "30-day streak", st >= 30]
+      ].map(([t, d, ok]) => ({ t, d, ok }));
+    }
+    function card() {
+      const x = xp(), r = rank(x), st = streak(), b = badges(), got = b.filter((z) => z.ok).length;
+      const pct = r.to ? Math.round((x - r.from) / (r.to - r.from) * 100) : 100;
+      return `<section class="card pcard">
+        <div class="prank"><span class="plvl">${r.level}</span><div><p class="pl-label">${T("Rank")}</p><h3>${esc(r.name)}</h3></div></div>
+        <div class="pxp"><div class="pxp-top"><b><span class="num" data-to="${x}">${x}</span> XP</b><span class="muted small">${r.next ? `${r.to - x} ${T("XP to")} ${esc(r.next)}` : T("Top rank reached")}</span></div><div class="cprog"><i style="width:${pct}%"></i></div></div>
+        <div class="pstats"><span class="pflame ${st ? "on" : ""}" title="Daily streak">${ICON("spark")}<b>${st}</b><small>${T("day streak")}</small></span><a href="#/badges" class="pbadge">${ICON("trophy")}<b>${got}/${b.length}</b><small>${T("badges")}</small></a></div>
+      </section>`;
+    }
+    function toast(n) {
+      const t = document.createElement("div"); t.className = "xptoast"; t.innerHTML = `<b>+${n} XP</b>`;
+      document.body.appendChild(t);
+      MOTION.animate(t, [{ opacity: 0, transform: "translate(-50%, 20px) scale(.8)" }, { opacity: 1, transform: "translate(-50%, 0) scale(1.06)", offset: .25 }, { opacity: 1, transform: "translate(-50%, 0) scale(1)", offset: .8 }, { opacity: 0, transform: "translate(-50%, -16px) scale(.96)" }], { duration: 1500, easing: "cubic-bezier(.34,1.56,.64,1)", fill: "forwards" });
+      setTimeout(() => t.remove(), 1600);
+    }
+    return { xp, rank, streak, badges, card, toast };
+  })();
+
+  views.badges = function () {
+    const b = GAME.badges();
+    return `<p class="kicker"><a href="#/learn">Learn</a></p><h1 class="page-title">${T("Badges")}</h1>${GAME.card()}
+      <div class="bgrid">${b.map((z) => `<div class="card bdg ${z.ok ? "ok" : ""}"><span class="bico">${ICON(z.ok ? "trophy" : "target")}</span><h3>${esc(z.t)}</h3><p class="muted small">${esc(z.d)}</p></div>`).join("")}</div>`;
+  };
+  views.badges.after = function () { view.querySelectorAll(".num[data-to]").forEach((n) => MOTION.countUp(n, +n.dataset.to)); MOTION.stagger(view.querySelectorAll(".bdg"), 40); };
+
+  /* Journey map: a road through stages to the destination job. */
+  function journeyHTML(t) {
+    const J = (window.JOURNEYS || {})[t.id]; if (!J) return "";
+    const C = (id) => (window.COURSES || []).find((c) => c.id === id);
+    let current = null;
+    J.stages.forEach((sg) => sg.courses.forEach((id) => { const c = C(id); if (c && !current && coursePct(c) < 100) current = id; }));
+    const stage = (sg, si) => {
+      const n = sg.courses.length, H = n * 132;
+      const pts = sg.courses.map((_, i) => [i % 2 ? 72 : 28, 66 + i * 132]);
+      const d = pts.map((p, i) => i ? `C ${pts[i - 1][0]} ${p[1] - 70}, ${p[0]} ${pts[i - 1][1] + 70}, ${p[0]} ${p[1]}` : `M 50 0 C 50 30, ${p[0]} ${p[1] - 40}, ${p[0]} ${p[1]}`).join(" ") + ` C ${pts[n - 1][0]} ${pts[n - 1][1] + 40}, 50 ${H - 30}, 50 ${H}`;
+      const done = sg.courses.every((id) => { const c = C(id); return c && coursePct(c) === 100; });
+      return `<section class="jstage ${done ? "done" : ""}">
+        <header class="jhead"><span class="jnum">${si + 1}</span><div><h3>${esc(sg.title)}</h3><p class="muted small">${esc(sg.tag)}</p></div></header>
+        <div class="jroad" style="height:${H}px">
+          <svg class="jsvg" viewBox="0 0 100 ${H}" preserveAspectRatio="none" aria-hidden="true"><path d="${d}" class="jpath-bg"/><path d="${d}" class="jpath"/></svg>
+          ${sg.courses.map((id, i) => { const c = C(id); if (!c) return ""; const p = coursePct(c); const st = p === 100 ? "done" : id === current ? "now" : p ? "started" : "";
+            return `<a class="jnode ${st} ${i % 2 ? "r" : "l"}" href="#/course/${esc(c.id)}" style="top:${pts[i][1]}px;left:${pts[i][0]}%">
+              <span class="jdot" style="--p:${p}">${ICON(p === 100 ? "check" : c.icon || "book")}</span>
+              <span class="jlbl"><strong>${esc(c.title)}</strong><small>${p}% • ${c.modules.length} modules${id === current ? " • " + T("you are here") : ""}</small></span></a>`; }).join("")}
+        </div>
+        ${sg.check ? `<div class="jcheck">${ICON("badge")}<span>${T("Checkpoint")}: <b>${esc(sg.check)}</b></span></div>` : ""}
+      </section>`;
+    };
+    return `<div class="journey">${J.stages.map(stage).join("")}<div class="jdest"><span class="jtrophy">${ICON("trophy")}</span><p class="pl-label">${T("Destination")}</p><h2>${esc(J.dest)}</h2><p class="muted">${T("Job-ready. Time to send those applications.")}</p></div></div>`;
+  }
+  function animateJourney() {
+    if (MOTION.reduce()) return;
+    view.querySelectorAll(".jpath").forEach((p, i) => { const len = p.getTotalLength(); p.style.strokeDasharray = len; MOTION.animate(p, [{ strokeDashoffset: len }, { strokeDashoffset: 0 }], { duration: 900, delay: 150 + i * 180, easing: "cubic-bezier(.65,0,.35,1)" }); });
+    MOTION.stagger(view.querySelectorAll(".jnode, .jcheck, .jdest"), 70);
+  }
+
   /* ---------- Learn: career tracks, courses, modules ---------- */
   const COURSES = window.COURSES || [], TRACKS = window.TRACKS || [];
   const course = (id) => COURSES.find((c) => c.id === id);
@@ -712,11 +934,11 @@
       <div class="cprog"><i style="width:${pct}%"></i></div><span class="cpct">${pct}%</span></a>`;
   }
   views.learn = function () {
-    return `<h1 class="page-title">Learn</h1><p class="muted lead-p">Pick a career track and work through it at your own pace. Every module ends with a quiz; senior modules go deep.</p>
-      <div class="tracks">${TRACKS.map((t) => `<a class="card track" href="#/track/${esc(t.id)}"><p class="pl-label">Career track</p><h2>${esc(t.title)}</h2><p class="muted">${esc(t.role)}</p>
+    return `<h1 class="page-title">${T("Learn")}</h1><p class="muted lead-p">Pick a career track and follow the road. Every module ends with a quiz, every stage with a checkpoint, and senior modules go deep.</p>${GAME.card()}
+      <div class="tracks">${TRACKS.map((t) => `<a class="card track" href="#/track/${esc(t.id)}"><p class="pl-label">${T("Career track")}</p><h2>${esc(t.title)}</h2><p class="muted">${esc(t.role)}</p>
         <div class="tprog"><span class="num" data-to="${trackPct(t)}">${trackPct(t)}</span><small>% done</small></div><div class="cprog"><i style="width:${trackPct(t)}%"></i></div>
         <p class="small muted">${t.courses.length} courses • ${esc(t.certs[0])}${t.certs.length > 1 ? " and more" : ""}</p></a>`).join("")}</div>
-      <div class="sec-h"><h2>Courses by subject</h2><span class="muted small">${COURSES.length} courses, ${COURSES.reduce((n, c) => n + c.modules.length, 0)} modules, ${COURSES.reduce((n, c) => n + c.modules.reduce((k, m) => k + m.quiz.length, 0), 0)} quiz questions</span></div>
+      <div class="sec-h"><h2>${T("Courses by subject")}</h2><span class="muted small">${COURSES.length} courses, ${COURSES.reduce((n, c) => n + c.modules.length, 0)} modules, ${COURSES.reduce((n, c) => n + c.modules.reduce((k, m) => k + m.quiz.length, 0), 0)} quiz questions</span></div>
       <nav class="areanav">${(window.AREAS || []).map((a) => `<a href="#area-${a.id}" class="chip">${esc(a.title)}</a>`).join("")}<a href="#area-more" class="chip">Languages and ITIL</a></nav>
       ${(window.AREAS || []).map((a) => `<section class="area" id="area-${a.id}"><h3 class="area-h">${esc(a.title)}</h3><div class="cgrid">${a.courses.map(course).filter(Boolean).map(courseCard).join("")}</div></section>`).join("")}
       <section class="area" id="area-more"><h3 class="area-h">Languages and service management</h3></section>
@@ -732,13 +954,12 @@
     const t = TRACKS.find((x) => x.id === id); if (!t) return notFound();
     return `<p class="kicker"><a href="#/learn">Learn</a> / Career track</p><h1 class="page-title">${esc(t.title)}</h1>
       <p class="lead-p">${esc(t.goal)}</p>
-      <section class="card"><p class="pl-label">Certifications to aim for</p><ul class="certs">${t.certs.map((c) => `<li>${ICON("badge")}<span>${esc(c)}</span></li>`).join("")}</ul>
+      <section class="card"><p class="pl-label">${T("Certifications to aim for")}</p><ul class="certs">${t.certs.map((c) => `<li>${ICON("badge")}<span>${esc(c)}</span></li>`).join("")}</ul>
         <p class="muted small" style="margin:10px 0 0">Exam details change: confirm the current version on the vendor's website before you book.</p></section>
-      <div class="sec-h"><h2>Your path</h2><span class="muted small">${trackPct(t)}% done</span></div>
-      <ol class="path">${t.courses.map((cid, i) => { const c = course(cid); if (!c) return ""; const pct = coursePct(c);
-        return `<li class="${pct === 100 ? "done" : ""}"><span class="pn">${pct === 100 ? ICON("check") : i + 1}</span><a class="card ccard row-c" href="#/course/${esc(c.id)}"><div><h3>${esc(c.title)}</h3><p class="muted small">${esc(c.short)}</p><div class="cprog"><i style="width:${pct}%"></i></div></div></a></li>`; }).join("")}</ol>`;
+      <div class="sec-h"><h2>${T("Your road")}</h2><span class="muted small">${trackPct(t)}% ${T("of the way")}</span></div>
+      ${journeyHTML(t)}`;
   };
-  views.track.after = function () { MOTION.stagger(view.querySelectorAll(".path li"), 50); };
+  views.track.after = function () { animateJourney(); };
 
   views.course = function (id) {
     const c = course(id); if (!c) return notFound();
@@ -747,8 +968,8 @@
       <p class="lead-p">${esc(c.short)}</p>
       <div class="cmeta big"><span>${ICON("book")}${c.modules.length} modules</span><span>${ICON("clock")}about ${c.hours} hours</span><span>${ICON("badge")}${esc(c.cert)}</span></div>
       <div class="cprog lg"><i style="width:${pct}%"></i></div>
-      <a class="go" href="#/module/${esc(c.id)}/${esc(nm.id)}" style="max-width:420px"><span class="dot">${ICON("play")}</span>${pct ? (pct === 100 ? "Review the course" : "Continue: " + esc(nm.title)) : "Start the course"}<span class="chev">${ICON("chevrons")}</span></a>
-      <div class="sec-h"><h2>Modules</h2></div>
+      <a class="go" href="#/module/${esc(c.id)}/${esc(nm.id)}" style="max-width:420px"><span class="dot">${ICON("play")}</span>${pct ? (pct === 100 ? T("Review the course") : T("Continue") + ": " + esc(nm.title)) : T("Start the course")}<span class="chev">${ICON("chevrons")}</span></a>
+      <div class="sec-h"><h2>${T("Modules")}</h2></div>
       <ol class="mods">${c.modules.map((m, i) => { const d = S.done[modKey(c.id, m.id)], q = S.quiz[modKey(c.id, m.id)];
         return `<li><a class="card mod ${d ? "done" : ""}" href="#/module/${esc(c.id)}/${esc(m.id)}"><span class="pn">${d ? ICON("check") : i + 1}</span>
           <span class="mt"><strong>${esc(m.title)}</strong><small>${levelPill(modLevel(c, m))}${q != null ? `<span class="qs">Quiz ${q}/${m.quiz.length}</span>` : ""}</small></span></a></li>`; }).join("")}</ol>`;
@@ -783,10 +1004,10 @@
   /* ---------- Practice hub, CLI labs, subnetting ---------- */
   views.practice = function () {
     const labs = TRAINERS.LABS;
-    return `<h1 class="page-title">Practice</h1><p class="muted lead-p">Hands-on work is what employers ask about. Do a little every day.</p>
-      <div class="sec-h"><h2>Cisco command line</h2><span class="muted small">Switch and router simulator</span></div>
+    return `<h1 class="page-title">${T("Practice")}</h1><p class="muted lead-p">Hands-on work is what employers ask about. Do a little every day.</p>
+      <div class="sec-h"><h2>${T("Cisco command line")}</h2><span class="muted small">Switch and router simulator</span></div>
       <div class="cgrid">${labs.map((l) => `<a class="card ccard" href="#/cli/${l.id}"><span class="tic">${ICON("server")}</span><h3>${esc(l.title)}</h3><p class="muted small">${esc(l.intro)}</p>${S.done["lab-" + l.id] ? `<div class="cmeta"><span>${ICON("check")}Completed</span></div>` : ""}</a>`).join("")}</div>
-      <div class="sec-h"><h2>Trainers</h2></div>
+      <div class="sec-h"><h2>${T("Trainers")}</h2></div>
       <div class="cgrid">
         <a class="card ccard" href="#/subnet"><span class="tic">${ICON("grid")}</span><h3>Subnetting trainer</h3><p class="muted small">Random IPv4 questions with instant explanations. Aim for 20 in a row.</p></a>
         <a class="card ccard" href="#/tickets"><span class="tic">${ICON("ticket")}</span><h3>Ticket trainer</h3><p class="muted small">Realistic service desk tickets, some in German.</p></a>
@@ -1056,16 +1277,23 @@
     if (e.key === "/" && !/input|textarea|select/i.test(document.activeElement.tagName)) { e.preventDefault(); gIn.focus(); }
   });
 
+  /* ---------- language switch ---------- */
+  function syncLang() { document.querySelectorAll("[data-lang]").forEach((b) => b.classList.toggle("on", b.dataset.lang === I18N.lang)); I18N.apply(); }
+  document.addEventListener("click", (e) => { const b = e.target.closest("[data-lang]"); if (b) { I18N.set(b.dataset.lang); syncLang(); render(); } });
+  syncLang();
+
   /* ---------- router ---------- */
+  let prevDepth = null;
   function render() {
     const parts = (location.hash.replace(/^#\/?/, "") || "today").split("/");
     const name = parts[0], args = parts.slice(1);
     const v = views[name] || notFound;
     view.innerHTML = v.apply(null, args);
     if (v.after) v.after.apply(null, args);
-    MOTION.page(view);
+    const depth = parts.filter(Boolean).length + (["track", "course", "module", "dunit", "game", "cli", "day", "quiz"].includes(name) ? 1 : 0);
+    MOTION.push(view, prevDepth == null ? 0 : depth > prevDepth ? 1 : depth < prevDepth ? -1 : 0); prevDepth = depth;
     view.querySelectorAll("svg.diagram").forEach((g) => MOTION.draw(g));
-    document.querySelectorAll("[data-route]").forEach((a) => a.classList.toggle("on", a.dataset.route === name || (name === "day" && a.dataset.route === "plan") || (name === "quiz" && a.dataset.route === "plan") || (["track", "course", "module"].includes(name) && a.dataset.route === "learn") || (["cli", "subnet", "tickets", "labs", "interview"].includes(name) && a.dataset.route === "practice") || (name === "dunit" && a.dataset.route === "german")));
+    document.querySelectorAll("[data-route]").forEach((a) => a.classList.toggle("on", a.dataset.route === name || (name === "day" && a.dataset.route === "plan") || (name === "quiz" && a.dataset.route === "plan") || (["track", "course", "module"].includes(name) && a.dataset.route === "learn") || (["cli", "subnet", "tickets", "labs", "interview"].includes(name) && a.dataset.route === "practice") || (["dunit", "arcade", "game"].includes(name) && a.dataset.route === "german")));
     if (window.innerWidth <= 760) closeDE();
     document.body.classList.remove("nav-open"); if (!panel.classList.contains("open")) scrim.classList.remove("on");
     window.scrollTo(0, 0);
@@ -1073,5 +1301,11 @@
   window.addEventListener("hashchange", render);
   render();
 
-  if ("serviceWorker" in navigator && location.protocol.startsWith("http")) navigator.serviceWorker.register("sw.js");
+  if ("serviceWorker" in navigator && location.protocol.startsWith("http")) {
+    const hadController = !!navigator.serviceWorker.controller;
+    navigator.serviceWorker.register("sw.js");
+    // A new version took over in the background: show it right away (once).
+    let reloaded = false;
+    navigator.serviceWorker.addEventListener("controllerchange", () => { if (hadController && !reloaded) { reloaded = true; location.reload(); } });
+  }
 })();

@@ -1,7 +1,7 @@
 {
   "name": "IT Support Academy",
   "short_name": "IT Academy",
-  "description": "8-week practical plan for IT support and system administration, with ITIL and workplace German.",
+  "description": "Career change into IT: career tracks for IT support, system administration and network engineering, Cisco CLI labs, Microsoft 365, Azure, Linux, ITIL and German for the workplace.",
   "start_url": "./#/today",
   "scope": "./",
   "display": "standalone",
@@ -30,5 +30,64 @@
       "type": "image/svg+xml"
     }
   ],
-  "id": "./"
+  "id": "./",
+  "lang": "en",
+  "dir": "ltr",
+  "orientation": "any",
+  "categories": [
+    "education",
+    "productivity"
+  ],
+  "display_override": [
+    "window-controls-overlay",
+    "standalone"
+  ],
+  "shortcuts": [
+    {
+      "name": "Learn",
+      "url": "./#/learn",
+      "icons": [
+        {
+          "src": "icons/icon-192-v2.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "Deutsch Arcade",
+      "url": "./#/arcade",
+      "icons": [
+        {
+          "src": "icons/icon-192-v2.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "Practice labs",
+      "url": "./#/practice",
+      "icons": [
+        {
+          "src": "icons/icon-192-v2.png",
+          "sizes": "192x192"
+        }
+      ]
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "docs/screenshots/phone-today.png",
+      "sizes": "390x844",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Today on a phone"
+    },
+    {
+      "src": "docs/screenshots/desktop-learn.png",
+      "sizes": "1366x800",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "Career tracks on a computer"
+    }
+  ]
 }

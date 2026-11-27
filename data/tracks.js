@@ -28,3 +28,24 @@ window.TRACKS = [
     certs: ["Cisco CCST Networking (100-150)", "Cisco CCNA (200-301)"],
     courses: ["net", "ccna-switch", "ccna-route", "ccna-services", "ccna-security", "ccna-auto", "linux", "cloud", "azure"] }
 ];
+
+/* Journey stages: the road from start to the destination job, per track. */
+window.JOURNEYS = {
+  support: { dest: "IT Support Specialist", stages: [
+    { title: "Basecamp", tag: "Where every IT legend starts: with a printer that will not print.", courses: ["net", "m365"] },
+    { title: "The Help Desk Valley", tag: "Tickets, Outlook and the eternal question: did you restart it?", courses: ["exchange", "collab"], check: "ITIL Foundation" },
+    { title: "Identity Ridge", tag: "Passwords, MFA and people who forgot both.", courses: ["entra", "intune"] },
+    { title: "The Deployment Pass", tag: "Laptops for everyone, set up while you drink coffee.", courses: ["imaging", "linux"], check: "Cisco CCST IT Support" } ] },
+  sysadmin: { dest: "System Administrator", stages: [
+    { title: "Basecamp", tag: "Learn the network before it learns your weaknesses.", courses: ["net", "ad"] },
+    { title: "Microsoft Highlands", tag: "Tenants, mailboxes and the art of least privilege.", courses: ["m365", "entra", "exchange"], check: "AZ-900" },
+    { title: "Endpoint Forest", tag: "Every device managed, no device left behind.", courses: ["intune", "imaging"], check: "MD-102" },
+    { title: "Cloud Summit", tag: "Above the clouds, the bill is still real.", courses: ["cloud", "azure"], check: "AZ-104" },
+    { title: "Penguin Plateau", tag: "sudo make me a sandwich.", courses: ["linux"] } ] },
+  network: { dest: "Network Engineer", stages: [
+    { title: "Basecamp", tag: "Seven layers, one cable, endless possibilities.", courses: ["net"], check: "CCST Networking" },
+    { title: "Switching Swamp", tag: "VLANs, trunks and loops that Spanning Tree saves you from.", courses: ["ccna-switch"] },
+    { title: "Routing Ridge", tag: "Every packet needs a road. You build the roads.", courses: ["ccna-route", "ccna-services"] },
+    { title: "Firewall Fortress", tag: "Deny any any, unless you have a very good reason.", courses: ["ccna-security"], check: "CCNA 200-301" },
+    { title: "Automation Peak", tag: "Why type it twenty times when Python can do it once?", courses: ["ccna-auto", "linux", "cloud"] } ] }
+};
