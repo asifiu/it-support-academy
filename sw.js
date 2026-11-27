@@ -1,9 +1,9 @@
 /* Offline support: caches the app files. Bump VERSION after every content change
    so phones pick up the new lessons. */
-const VERSION = "itsa-2026-11-27-9";
+const VERSION = "itsa-2026-11-27-11";
 const FILES = [
   "./", "index.html", "css/style.css", "manifest.webmanifest", "icons/icon-v2.svg", "icons/icon-192-v2.png", "icons/icon-512-v2.png", "icons/icon-maskable-512-v2.png", "icons/apple-touch-icon-v2.png",
-  "js/icons.js", "js/app.js", "js/srs.js", "js/priority.js",
+  "js/icons.js", "js/motion.js", "js/app.js", "js/srs.js", "js/priority.js",
   "data/plan.js", "data/lessons.js", "data/itil.js", "data/german.js", "data/tickets.js", "data/interview.js", "data/runbooks.js", "data/deepdives.js", "data/guides.js", "data/diagrams.js"
 ];
 self.addEventListener("install", (e) => { e.waitUntil(caches.open(VERSION).then((c) => c.addAll(FILES.map((f) => new Request(f, { cache: "reload" }))))); self.skipWaiting(); });

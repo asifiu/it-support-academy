@@ -5,10 +5,10 @@
 
   /* ---------- state ---------- */
   const KEY = "itsa-v1";
-  const blank = { start: null, done: {}, quiz: {}, itil: {}, cards: {}, tickets: {}, notes: {} };
+  const blank = { start: null, done: {}, quiz: {}, itil: {}, cards: {}, tickets: {}, notes: {}, pos: {} };
   /* Keep only well-formed values, so an edited or foreign progress file cannot inject HTML. */
   function clean(d) {
-    const out = { start: null, done: {}, quiz: {}, itil: {}, cards: {}, tickets: {}, notes: {} };
+    const out = { start: null, done: {}, quiz: {}, itil: {}, cards: {}, tickets: {}, notes: {}, pos: {} };
     if (!d || typeof d !== "object") return out;
     const obj = (o) => (o && typeof o === "object" && !Array.isArray(o) ? o : {});
     const safeKey = (k) => /^[A-Za-z0-9-]{1,40}$/.test(k);
@@ -17,6 +17,7 @@
     for (const [k, v] of Object.entries(obj(d.done))) if (safeKey(k) && v === true) out.done[k] = true;
     for (const f of ["quiz", "itil", "tickets"]) for (const [k, v] of Object.entries(obj(d[f]))) if (safeKey(k) && num(v)) out[f][k] = v;
     for (const [k, v] of Object.entries(obj(d.cards))) if (safeKey(k) && v && num(v.box) && num(v.due)) out.cards[k] = { box: v.box, due: v.due };
+    for (const [k, v] of Object.entries(obj(d.pos))) if (/^[A-Za-z0-9:-]{1,40}$/.test(k) && Number.isInteger(v) && v >= 0 && v < 500) out.pos[k] = v;
     for (const [k, v] of Object.entries(obj(d.notes))) if (safeKey(k) && typeof v === "string") out.notes[k] = v.slice(0, 20000);
     return out;
   }
@@ -99,7 +100,7 @@
   document.addEventListener("change", (e) => {
     const t = e.target;
     if (t.matches("input[type=checkbox][data-key]")) {
-      if (t.checked) S.done[t.dataset.key] = true; else delete S.done[t.dataset.key];
+      if (t.checked) { S.done[t.dataset.key] = true; MOTION.pop(t.closest(".check")); } else delete S.done[t.dataset.key];
       save();
     }
     if (t.matches("textarea[data-note]")) { S.notes[t.dataset.note] = t.value; save(); }
@@ -128,9 +129,10 @@
           l.classList.toggle("right", j === q[2]);
           l.classList.toggle("wrong", picked && +picked.value === j && j !== q[2]);
         });
-        if (picked && +picked.value === q[2]) score++;
+        if (picked && +picked.value === q[2]) { score++; MOTION.pop(fs.querySelectorAll(".opt")[q[2]]); }
+        else if (picked) MOTION.shake(fs.querySelectorAll(".opt")[+picked.value]);
       });
-      $(".result", f).textContent = `${score} / ${qs.length} correct` + (score === qs.length ? ". Perfect!" : ". Green shows the right answer.");
+      $(".result", f).textContent = `${score} / ${qs.length} correct` + (score === qs.length ? ". Perfect!" : ". The tick marks the right answer.");
       onScore(score);
     });
   }
@@ -154,8 +156,10 @@
       return;
     }
   });
-  const callout = (kind, icon, title, body) => `<aside class="note ${kind}"><span class="note-ic">${ICON(icon)}</span><div><strong>${title}</strong>${body}</div></aside>`;
-  function lessonHTML(blocks, keyPrefix) {
+  /* Notes read like an edited manual: icon in the margin, a short lead-in, no box. */
+  const callout = (kind, icon, title, body) => `<aside class="note ${kind}"><span class="note-ic">${ICON(icon)}</span><div class="note-tx">${body}</div></aside>`;
+  const lead = (word, text) => `<p><span class="lead">${word}</span>${esc(text)}</p>`;
+  function lessonHTML(blocks, keyPrefix, offset) {
     const partsTotal = blocks.filter((b) => b[0] === "part").length;
     return blocks.map((b, bi) => {
       switch (b[0]) {
@@ -163,15 +167,15 @@
         case "one": return `<p class="one">${esc(b[1])}</p>`;
         case "parts": return `<div class="table"><table class="parts"><tbody>${b[1].map(([n, d]) => `<tr><th>${esc(n)}</th><td>${esc(d)}</td></tr>`).join("")}</tbody></table></div>`;
         case "svg": return window.DIAGRAMS && DIAGRAMS[b[1]] ? figHTML(b[1], b[2]) : "";
-        case "done": return callout("sum", "list", "Done when", b[1].map((t, i) => check((keyPrefix || "x") + "-done-" + bi + "-" + i, t)).join(""));
+        case "done": return callout("sum", "check", "", `<p class="note-h">You are done when</p>` + b[1].map((t, i) => check((keyPrefix || "x") + "-done-" + ((offset || 0) + bi) + "-" + i, t)).join(""));
         case "h": return `<h3>${esc(b[1])}</h3>`;
         case "p": return `<p>${esc(b[1])}</p>`;
-        case "eg": return callout("eg", "book", "Example", `<p>${esc(b[1])}</p>`);
-        case "tip": return callout("tip", "bulb", "Tip", `<p>${esc(b[1])}</p>`);
-        case "warn": return callout("warn", "alert", "Watch out", `<p>${esc(b[1])}</p>`);
+        case "eg": return callout("eg", "book", "", lead("In practice:", b[1]));
+        case "tip": return callout("tip", "bulb", "", lead("Tip:", b[1]));
+        case "warn": return callout("warn", "alert", "", lead("Watch out:", b[1]));
         case "steps": return `<ol class="steps">${b[1].map((s) => `<li>${esc(s)}</li>`).join("")}</ol>`;
         case "cmd": return `<div class="cmd"><code>${esc(b[1])}</code><button class="copy" data-copy="${esc(b[1])}">Copy</button><p>${esc(b[2])}</p></div>`;
-        case "sum": return callout("sum", "list", "Remember", `<ul>${b[1].map((s) => `<li>${esc(s)}</li>`).join("")}</ul>`);
+        case "sum": return callout("sum", "list", "", `<p class="note-h">Key takeaways</p><ul>${b[1].map((s) => `<li>${esc(s)}</li>`).join("")}</ul>`);
         default: return "";
       }
     }).join("");
@@ -180,6 +184,86 @@
     const c = e.target.closest("[data-copy]");
     if (c && navigator.clipboard) { navigator.clipboard.writeText(c.dataset.copy); c.textContent = "Copied"; setTimeout(() => (c.textContent = "Copy"), 1200); }
   });
+
+
+  /* ---------- Lesson player: short steps, Next until the end ---------- */
+  function lessonSteps(blocks, keyPrefix, firstTitle) {
+    const total = blocks.filter((b) => b[0] === "part").length;
+    const out = []; let part = "", partNo = 0, cur = null;
+    blocks.forEach((b, gi) => {
+      if (b[0] === "part") { part = b[2]; partNo = +b[1]; cur = null; return; }
+      if (b[0] === "h" || !cur) {
+        cur = { title: b[0] === "h" ? b[1] : part || firstTitle || "Introduction", label: part ? `Part ${partNo} of ${total} – ${part}` : "", start: b[0] === "h" ? gi + 1 : gi, blocks: [] };
+        out.push(cur);
+        if (b[0] === "h") return;
+      }
+      cur.blocks.push(b);
+    });
+    return out.map((st) => ({ title: st.title, label: st.label.replace(" – ", ": "), html: lessonHTML(st.blocks, keyPrefix, st.start) }));
+  }
+
+  function mountPlayer(host, cfg) {
+    const steps = cfg.steps, n = steps.length;
+    let i = Math.min(S.pos[cfg.key] || 0, n - 1);
+    host.innerHTML = `<div class="player">
+      <div class="pl-head">
+        <div class="pl-bar" role="progressbar" aria-label="Lesson progress" aria-valuemin="1" aria-valuemax="${n}"><i></i></div>
+        <button class="pl-count" aria-expanded="false" aria-controls="plToc"></button>
+        <ol class="pl-toc" id="plToc" hidden>${steps.map((st, j) => `<li><button data-go="${j}"><span class="pl-dot"></span><span>${esc(st.title)}</span></button></li>`).join("")}</ol>
+      </div>
+      <article class="pl-step" tabindex="-1"></article>
+      <div class="pl-nav"><button class="btn ghost pl-back">${ICON("chevron", "flip")}<span>Back</span></button><button class="go pl-next"><span class="lbl"></span><span class="dot">${ICON("arrowRight")}</span></button></div>
+    </div>`;
+    const art = host.querySelector(".pl-step"), bar = host.querySelector(".pl-bar"), barI = bar.querySelector("i");
+    const count = host.querySelector(".pl-count"), toc = host.querySelector(".pl-toc");
+    const back = host.querySelector(".pl-back"), next = host.querySelector(".pl-next");
+    function show(dir) {
+      const st = steps[i];
+      S.pos[cfg.key] = i; save();
+      art.innerHTML = `${st.label ? `<p class="pl-label">${esc(st.label)}</p>` : ""}<h2 class="pl-title">${esc(st.title)}</h2><div class="lesson pl-body">${st.html}</div>`;
+      barI.style.width = ((i + 1) / n * 100) + "%"; bar.setAttribute("aria-valuenow", i + 1);
+      count.innerHTML = `Step <b>${i + 1}</b> of ${n}${ICON("chevron", "down")}`;
+      toc.querySelectorAll("li").forEach((li, j) => { li.classList.toggle("now", j === i); li.classList.toggle("seen", j < i); });
+      back.disabled = i === 0;
+      next.querySelector(".lbl").textContent = i === n - 1 ? (cfg.finishLabel || "Finish") : "Next";
+      next.classList.toggle("finish", i === n - 1);
+      if (st.after) st.after(art);
+      art.querySelectorAll("svg.diagram").forEach((g) => MOTION.draw(g));
+      if (dir) {
+        MOTION.step(art, dir);
+        const top = host.getBoundingClientRect().top + scrollY - 80;
+        if (scrollY > top) window.scrollTo({ top, behavior: MOTION.reduce() ? "auto" : "smooth" });
+        art.focus({ preventScroll: true });
+      }
+      if (cfg.onStep) cfg.onStep(i);
+    }
+    function go(to) {
+      if (to < 0 || to === i) return;
+      if (to >= n) { if (cfg.onFinish) cfg.onFinish(); return; }
+      const dir = to > i ? 1 : -1; i = to; show(dir);
+    }
+    next.onclick = () => go(i + 1);
+    back.onclick = () => go(i - 1);
+    count.onclick = () => { const o = toc.hidden; toc.hidden = !o; count.setAttribute("aria-expanded", o); if (o) MOTION.animate(toc, [{ opacity: 0, transform: "translateY(-6px)" }, { opacity: 1, transform: "none" }], { duration: 200 }); };
+    toc.onclick = (e) => { const b = e.target.closest("[data-go]"); if (b) { toc.hidden = true; count.setAttribute("aria-expanded", "false"); go(+b.dataset.go); } };
+    let x0 = null, y0 = null;
+    art.addEventListener("touchstart", (e) => { if (e.target.closest(".fig-scroll, input, textarea, select, .cmd")) { x0 = null; return; } x0 = e.touches[0].clientX; y0 = e.touches[0].clientY; }, { passive: true });
+    art.addEventListener("touchend", (e) => {
+      if (x0 == null) return;
+      const dx = e.changedTouches[0].clientX - x0, dy = e.changedTouches[0].clientY - y0;
+      if (Math.abs(dx) > 70 && Math.abs(dx) > Math.abs(dy) * 1.6) go(i + (dx < 0 ? 1 : -1));
+      x0 = null;
+    });
+    if (window._plKey) document.removeEventListener("keydown", window._plKey);
+    window._plKey = (e) => {
+      if (!host.isConnected) { document.removeEventListener("keydown", window._plKey); return; }
+      if (/input|textarea|select/i.test(document.activeElement.tagName)) return;
+      if (e.key === "ArrowRight") { e.preventDefault(); go(i + 1); } else if (e.key === "ArrowLeft") { e.preventDefault(); go(i - 1); }
+    };
+    document.addEventListener("keydown", window._plKey);
+    show(0);
+    return { go };
+  }
 
   /* ---------- views ---------- */
   const views = {};
@@ -227,7 +311,7 @@
           <h1>${esc(headline)}</h1><p class="sub">${esc(sub)}</p>${cta}
         </div>
         <div class="gauge" role="img" aria-label="${pct}% of the course done">
-          <small>Course progress</small><b>${pct}%</b>${bar(pct)}<div class="scale"><span>0</span><span>${daysDone} of 40 days</span></div>
+          <small>Course progress</small><b><span class="num" data-to="${pct}">${pct}</span>%</b>${bar(pct)}<div class="scale"><span>0</span><span>${daysDone} of 40 days</span></div>
         </div>
       </section>
       <div class="sec-h"><h2>This week</h2><a href="#/plan">Open the plan</a></div>
@@ -238,28 +322,31 @@
           <h3>ITIL ${esc(itil.id)}: ${esc(itil.title)}</h3><p class="muted small" style="margin:0">30 minutes${S.itil[itil.id] != null ? `, best quiz score ${S.itil[itil.id]}` : ", notes then quiz"}</p></a>
         <button class="card task wide" data-open-de style="text-align:left;font:inherit;cursor:pointer;width:100%"><span class="tic">${ICON("language")}</span><span class="corner">${ICON("expand")}</span>
           <h3>${due} German cards due</h3><p class="muted small" style="margin:0">30 minutes of phone phrases, instructions and IT words</p></button>
-        ${tile("#/plan", "check", daysDone + "<small style='font-size:1rem;color:var(--text-3)'>/40</small>", "Lesson days done")}
-        ${tile("#/plan", "target", Object.keys(S.quiz).length + "<small style='font-size:1rem;color:var(--text-3)'>/8</small>", "Week tests taken")}
-        ${tile("#/itil/mock", "badge", S.itil.I8 != null ? S.itil.I8 + "<small style='font-size:1rem;color:var(--text-3)'>/40</small>" : "None", "Best ITIL mock")}
-        ${tile("#/tickets", "ticket", Object.keys(S.tickets).length + "<small style='font-size:1rem;color:var(--text-3)'>/" + TICKETS.length + "</small>", "Tickets worked")}
+        ${tile("#/plan", "check", `<span class="num" data-to="${daysDone}">${daysDone}</span><small class="of">/40</small>`, "Lesson days done")}
+        ${tile("#/plan", "target", `<span class="num" data-to="${Object.keys(S.quiz).length}">${Object.keys(S.quiz).length}</span><small class="of">/8</small>`, "Week tests taken")}
+        ${tile("#/itil/mock", "badge", S.itil.I8 != null ? `<span class="num" data-to="${S.itil.I8}">${S.itil.I8}</span><small class="of">/40</small>` : "None", "Best ITIL mock")}
+        ${tile("#/tickets", "ticket", `<span class="num" data-to="${Object.keys(S.tickets).length}">${Object.keys(S.tickets).length}</span><small class="of">/${TICKETS.length}</small>`, "Tickets worked")}
       </div>
       ${p.dow === 6 ? `<section class="card night" style="margin-top:14px"><div class="moon">${ICON("moon")}</div><h2>Rest is part of learning</h2><p class="muted" style="margin:0">Your brain stores this week's labs while you sleep. See you Monday.</p></section>` : ""}
       ${isStandalone() ? "" : `<a class="card row" href="#/install" style="margin-top:14px"><span class="wnum">${ICON("download")}</span><span><strong>Install on your phone</strong><small>Works offline and opens like a normal app.</small></span></a>`}`;
   };
   views.today.after = function () {
+    view.querySelectorAll(".num[data-to]").forEach((n) => MOTION.countUp(n, +n.dataset.to));
+    const g = view.querySelector(".gauge .bar span"); if (g) MOTION.grow(g, parseFloat(g.style.width) || 0, 250);
+    MOTION.stagger(view.querySelectorAll(".weekstrip > *, .bento > .card"), 45);
     const b = $("#startBtn");
     if (b) b.onclick = () => { S.start = $("#startDate").value || isoDate(new Date()); save(); render(); };
   };
 
   views.plan = function () {
     const p = position();
-    return `<h1>8-week plan</h1><p class="muted">Each weekday: learn, lab, check. Saturday: test. The 'Teach me' lessons explain everything step by step.</p>
+    return `<h1>8-week plan</h1><p class="muted">Each weekday is one guided flow: lesson, key points, lab and self-check. Saturday is the weekly test.</p>
       ${PLAN.map((wk) => {
         const done = wk.days.filter((_, i) => dayDone(wk.id, i + 1)).length;
         return `<details class="card week" ${p && p.week === wk.id ? "open" : ""}>
           <summary><span class="wnum">${wk.id}</span><span><strong>${esc(wk.title)}</strong><small>${done}/5 days done${S.quiz[wk.id] != null ? " · test " + S.quiz[wk.id] + "/" + wk.quiz.length : ""}</small></span></summary>
           <p class="muted">${esc(wk.why)}</p>
-          <ol class="days">${wk.days.map((d, i) => `<li class="${dayDone(wk.id, i + 1) ? "done" : ""}"><a href="#/day/${wk.id}/${i + 1}">${esc(d.title)}</a>${LESSONS[wk.id + "-" + (i + 1)] ? '<span class="pill">Teach me</span>' : ""}</li>`).join("")}</ol>
+          <ol class="days">${wk.days.map((d, i) => `<li class="${dayDone(wk.id, i + 1) ? "done" : ""}"><a href="#/day/${wk.id}/${i + 1}">${esc(d.title)}</a>${LESSONS[wk.id + "-" + (i + 1)] ? '<span class="pill">Lesson</span>' : ""}</li>`).join("")}</ol>
           <a class="btn ghost" href="#/quiz/${wk.id}">Week ${wk.id} test</a></details>`;
       }).join("")}`;
   };
@@ -268,19 +355,36 @@
     w = +w; d = +d;
     const wk = PLAN[w - 1]; if (!wk) return notFound();
     const day = wk.days[d - 1]; if (!day) return notFound();
-    const k = `${w}-${d}`;
-    const lesson = LESSONS[k];
-    const prev = d > 1 ? `#/day/${w}/${d - 1}` : w > 1 ? `#/day/${w - 1}/5` : null;
-    const next = d < 5 ? `#/day/${w}/${d + 1}` : `#/quiz/${w}`;
-    return `<p class="kicker"><a href="#/plan">Plan</a> · Week ${w}, day ${d}</p><h1>${esc(day.title)}</h1>
-      ${lesson ? `<section class="card lesson"><h2>Teach me (step by step)</h2>${lessonHTML(lesson)}${check(k + "-teach", "I read the lesson and tried every command")}</section>`
-        : `<section class="card note tip"><strong>Detailed lesson coming</strong> This day's 'Teach me' lesson is added when we reach it in our sessions. Until then, use the summary and links below.</section>`}
-      ${guideCard(k)}
-      <section class="card"><h2>Key points</h2><ul>${day.learn.map((x) => `<li>${esc(x)}</li>`).join("")}</ul>${links(day.res)}${check(k + "-learn", "I understand the key points")}</section>
-      <section class="card"><h2>${lesson ? "Part 3: Practice (hands-on lab)" : "Hands-on lab"}</h2><ol class="steps">${day.lab.map((x) => `<li>${esc(x)}</li>`).join("")}</ol>${check(k + "-lab", "Lab done and written up")}
-        <label class="field">My notes (saved on this device)<textarea data-note="${k}" rows="4">${esc(S.notes[k] || "")}</textarea></label></section>
-      <section class="card"><h2>Check yourself</h2><p class="muted">Answer out loud or in your notes before moving on.</p><ul>${day.check.map((x) => `<li>${esc(x)}</li>`).join("")}</ul>${check(k + "-check", "I can answer these without looking")}</section>
-      <nav class="pager">${prev ? `<a class="btn ghost" href="${prev}">Previous</a>` : "<span></span>"}<a class="btn" href="${next}">${d < 5 ? "Next day" : "Week test"}</a></nav>`;
+    return `<p class="kicker"><a href="#/plan">8-week plan</a> / Week ${w}, day ${d}</p><h1 class="page-title">${esc(day.title)}</h1><div id="player"></div>`;
+  };
+  views.day.after = function (w, d) {
+    w = +w; d = +d;
+    const wk = PLAN[w - 1]; if (!wk) return;
+    const day = wk.days[d - 1]; if (!day) return;
+    const k = `${w}-${d}`, lesson = LESSONS[k];
+    const nextHref = d < 5 ? `#/day/${w}/${d + 1}` : `#/quiz/${w}`;
+    const steps = [];
+    const gc = guideCard(k);
+    if (gc) steps.push({ title: "Before you start", label: "Software guide", html: `<p>This day uses a tool you may not know yet. Read its big picture first, then come back here.</p>${gc}` });
+    const lessonSt = lesson ? lessonSteps(lesson) : [];
+    if (lessonSt.length) steps.push(...lessonSt);
+    else steps.push({ title: "Lesson coming soon", label: "Lesson", html: `<p>The detailed lesson for this day is added when we reach it in our sessions. Until then, work through the key points, the lab and the self-check.</p>` });
+    const lessonEnd = steps.length - 1;
+    steps.push({ title: "Key points", label: "Summary", html: `<ul>${day.learn.map((x) => `<li>${esc(x)}</li>`).join("")}</ul>${links(day.res)}${check(k + "-learn", "I understand the key points")}` });
+    steps.push({ title: "Hands-on lab", label: "Practice", html: `<ol class="steps">${day.lab.map((x) => `<li>${esc(x)}</li>`).join("")}</ol>${check(k + "-lab", "Lab done and written up")}
+      <label class="field">My notes, saved on this device<textarea data-note="${k}" rows="4">${esc(S.notes[k] || "")}</textarea></label>` });
+    steps.push({ title: "Check yourself", label: "Self-check", html: `<p>Answer out loud or in your notes before you move on.</p><ul>${day.check.map((x) => `<li>${esc(x)}</li>`).join("")}</ul>${check(k + "-check", "I can answer these without looking")}` });
+    steps.push({ title: "Day complete", label: "Finish", html: "", after: (art) => {
+      const items = [["Lesson", k + "-teach"], ["Key points", k + "-learn"], ["Hands-on lab", k + "-lab"], ["Self-check", k + "-check"]];
+      art.querySelector(".pl-body").innerHTML = `<div class="done-hero"><span class="done-mark">${ICON("check")}</span><p>${dayDone(w, d) ? "Everything for today is done. Well done." : "Almost there. Switch on whatever is still open."}</p></div>
+        <ul class="done-list">${items.map(([t, key]) => `<li class="${S.done[key] ? "ok" : ""}">${ICON(S.done[key] ? "check" : "clock")}<span>${t}</span></li>`).join("")}</ul>`;
+      if (dayDone(w, d)) MOTION.pop(art.querySelector(".done-mark"));
+    } });
+    mountPlayer($("#player"), {
+      key: "day-" + k, steps, finishLabel: d < 5 ? "Next day" : "Week test",
+      onStep: (i) => { if (lesson && i > lessonEnd && !S.done[k + "-teach"]) { S.done[k + "-teach"] = true; save(); } },
+      onFinish: () => { location.hash = nextHref; }
+    });
   };
 
   views.quiz = function (w) {
@@ -348,10 +452,7 @@
     if (id === "mock") return mockView();
     if (id) {
       const L = ITIL.lessons.find((x) => x.id === id); if (!L) return notFound();
-      return `<p class="kicker"><a href="#/itil">ITIL</a> · ${esc(L.id)}</p><h1>${esc(L.title)}</h1>
-        <section class="card"><dl class="terms">${L.notes.map(([t, d]) => `<dt>${esc(t)}</dt><dd>${esc(d)}</dd>`).join("")}</dl></section>
-        <section class="card note eg"><strong>On the job</strong> ${esc(L.job)}</section>
-        ${L.quiz.length ? `<section class="card"><h2>Lesson quiz</h2>${quizHTML(L.id, (curQs = shuffleQs(L.quiz)))}</section>` : `<a class="btn" href="#/itil/mock">Start the 40-question mock (60 min)</a>`}`;
+      return `<p class="kicker"><a href="#/itil">ITIL Foundation</a> / Lesson ${esc(L.id)}</p><h1 class="page-title">${esc(L.title)}</h1><div id="player"></div>`;
     }
     return `<h1>ITIL Foundation</h1>
       <section class="card"><p>Exam: ${ITIL.exam.questions} questions, ${ITIL.exam.minutes} minutes, pass with ${ITIL.exam.pass}. One lesson per week, 30 minutes a day. Book the exam only after 32+ in the mock twice.</p>
@@ -384,7 +485,12 @@
       return;
     }
     const L = id && ITIL.lessons.find((x) => x.id === id);
-    if (L && L.quiz.length) wireQuiz(curQs, (s) => { S.itil[L.id] = Math.max(s, S.itil[L.id] || 0); save(); });
+    if (!L) return;
+    const steps = L.notes.map(([t, d], j) => ({ title: t, label: `Key idea ${j + 1} of ${L.notes.length}`, html: `<p class="term-def">${esc(d)}</p>` }));
+    steps.push({ title: "On the job", label: "In practice", html: callout("eg", "book", "", lead("At the service desk:", L.job)) });
+    if (L.quiz.length) steps.push({ title: "Lesson quiz", label: "Check", html: quizHTML(L.id, (curQs = shuffleQs(L.quiz))), after: () => wireQuiz(curQs, (sc) => { S.itil[L.id] = Math.max(sc, S.itil[L.id] || 0); save(); }) });
+    else steps.push({ title: "Mock exam", label: "Exam practice", html: `<p>40 questions, 60 minutes, pass mark 26. Take it when the eight lessons feel easy.</p><a class="btn" href="#/itil/mock">Start the mock exam</a>` });
+    mountPlayer($("#player"), { key: "itil-" + L.id, steps, finishLabel: "Back to ITIL", onFinish: () => { location.hash = "#/itil"; } });
   };
 
   views.interview = function () {
@@ -436,11 +542,19 @@
   views.guides = function (id) {
     if (id) {
       const g = GUIDES.find((x) => x.id === id); if (!g) return notFound();
-      return `<p class="kicker"><a href="#/guides">Software guides</a></p><h1>${esc(g.title)}</h1>
-        <section class="card lesson">${lessonHTML(g.blocks, "g-" + g.id)}</section>`;
+      return `<p class="kicker"><a href="#/guides">Software guides</a></p><h1 class="page-title">${esc(g.title)}</h1><div id="player"></div>`;
     }
     return `<h1>Software guides</h1><p class="muted">Every guide: 1. Big picture, 2. Go deeper, 3. Practice. Read the big picture before the day that uses the tool.</p>
       ${GUIDES.map((g) => `<a class="card row" href="#/guides/${esc(g.id)}"><span><strong>${esc(g.title)}</strong><small>${esc(g.short)}</small></span></a>`).join("")}`;
+  };
+
+  views.guides.after = function (id) {
+    const g = id && GUIDES.find((x) => x.id === id); if (!g) return;
+    const steps = lessonSteps(g.blocks, "g-" + g.id);
+    const i = GUIDES.indexOf(g), nxt = GUIDES[i + 1];
+    steps.push({ title: "Guide complete", label: "Finish", html: `<div class="done-hero"><span class="done-mark">${ICON("check")}</span><p>You now have the big picture of ${esc(g.title)}.</p></div>${nxt ? `<a class="card row" href="#/guides/${esc(nxt.id)}"><span><strong>Next guide: ${esc(nxt.title)}</strong><small>${esc(nxt.short)}</small></span></a>` : ""}`,
+      after: (art) => MOTION.pop(art.querySelector(".done-mark")) });
+    mountPlayer($("#player"), { key: "g-" + g.id, steps, finishLabel: "Back to guides", onFinish: () => { location.hash = "#/guides"; } });
   };
 
   /* ---------- Install as an app ---------- */
@@ -502,9 +616,7 @@
     if (kind === "dd") {
       const d = DEEPDIVES.find((x) => x.id === id); if (!d) return notFound();
       const related = RUNBOOKS.filter((r) => r.deep === d.id);
-      return `<p class="kicker"><a href="#/handbook">Office handbook</a> · How it really works</p><h1>${esc(d.title)}</h1>
-        <section class="card lesson">${lessonHTML(d.blocks, "dd-" + d.id)}${check("dd-" + d.id, "I read this and can explain it to a colleague")}</section>
-        ${related.length ? `<section class="card"><h2>Tickets this explains</h2><ul>${related.map((r) => `<li><a href="#/handbook/rb/${esc(r.id)}">${esc(r.title)}</a></li>`).join("")}</ul></section>` : ""}`;
+      return `<p class="kicker"><a href="#/handbook">Office handbook</a> / How it really works</p><h1 class="page-title">${esc(d.title)}</h1><div id="player"></div>`;
     }
     const cats = [...new Set(RUNBOOKS.map((r) => r.cat))];
     return `<h1>Office handbook</h1>
@@ -513,7 +625,15 @@
       <div class="chips"><button class="${hbCat ? "" : "on"}" data-cat="">All</button>${cats.map((c) => `<button class="${hbCat === c ? "on" : ""}" data-cat="${esc(c)}">${esc(c)}</button>`).join("")}</div>
       <div id="hbList">${hbListHTML()}</div>`;
   };
-  views.handbook.after = function (kind) {
+  views.handbook.after = function (kind, id) {
+    if (kind === "dd") {
+      const d = DEEPDIVES.find((x) => x.id === id); if (!d) return;
+      const related = RUNBOOKS.filter((r) => r.deep === d.id);
+      const steps = lessonSteps(d.blocks, "dd-" + d.id, "Why it matters");
+      steps.push({ title: "Use it at work", label: "Finish", html: `${check("dd-" + d.id, "I can explain this to a colleague")}${related.length ? `<h3>Tickets this explains</h3>${related.map((r) => `<a class="card row" href="#/handbook/rb/${esc(r.id)}"><span><strong>${esc(r.title)}</strong><small>${esc(r.symptom)}</small></span></a>`).join("")}` : ""}` });
+      mountPlayer($("#player"), { key: "dd-" + d.id, steps, finishLabel: "Back to handbook", onFinish: () => { location.hash = "#/handbook"; } });
+      return;
+    }
     if (kind) return;
     $("#hbSearch").oninput = (e) => { hbQuery = e.target.value; $("#hbList").innerHTML = hbListHTML(); };
     view.querySelector(".chips").onclick = (e) => {
@@ -564,12 +684,13 @@
     root.onclick = (e) => {
       const t = e.target;
       if (t.dataset.detab) { deTab = t.dataset.detab; refreshGerman(); }
-      else if (t.id === "deReveal") { deShow = true; refreshGerman(); }
+      else if (t.id === "deReveal") { deShow = true; refreshGerman(); root.querySelectorAll(".flash").forEach((f) => MOTION.flip(f)); }
       else if (t.dataset.grade != null) {
         const cur = deQueue.shift();
         S.cards[cur.key] = SRS.next(S.cards[cur.key], t.dataset.grade === "1"); save();
         if (t.dataset.grade === "0") deQueue.push(cur); // see it again this round
         deShow = false; refreshGerman();
+        root.querySelectorAll(".flash").forEach((f) => MOTION.animate(f, [{ opacity: 0, transform: "translateX(30px) rotate(1.5deg)" }, { opacity: 1, transform: "none" }], { duration: 300 }));
       }
     };
     root.onchange = (e) => { if (e.target.id === "deDeck") { deDeck = e.target.value; deQueue = []; deShow = false; refreshGerman(); } };
@@ -643,6 +764,8 @@
     const v = views[name] || notFound;
     view.innerHTML = v.apply(null, args);
     if (v.after) v.after.apply(null, args);
+    MOTION.page(view);
+    view.querySelectorAll("svg.diagram").forEach((g) => MOTION.draw(g));
     document.querySelectorAll("[data-route]").forEach((a) => a.classList.toggle("on", a.dataset.route === name || (name === "day" && a.dataset.route === "plan") || (name === "quiz" && a.dataset.route === "plan")));
     if (window.innerWidth <= 760) closeDE();
     document.body.classList.remove("nav-open"); if (!panel.classList.contains("open")) scrim.classList.remove("on");
