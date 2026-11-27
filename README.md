@@ -68,6 +68,7 @@ The plan comes from 55 real IT support and sysadmin job ads in Germany (Oct to N
 - **Journey maps**: each career track is a road with stages, stations (courses), certification checkpoints and the destination job. XP for everything you finish, ranks from Ping to Infrastructure Legend, a daily streak and badges.
 - **Deutsch Arcade**: Der-Die-Das Blitz, Memory, Hör-Diktat, Verb-Rennen (Präsens, Präteritum, Perfekt with haben/sein) and Satz-Baumeister. Every point is XP.
 - **Interface in English or German** (switch in the side menu or Progress & sync). Course content is being translated step by step.
+- **Active Directory road** (14 modules, Foundation to Senior): first-day basics and service desk tasks, sign-in chain, sites and replication internals, Kerberos and delegation, tier model, upgrades and forest recovery, an incidents casebook, a capstone lab (build and run corp.lab) and 10 interview questions with model answers.
 - **Casebooks**: real production incidents worked like a senior engineer (Active Directory, network troubleshooting).
 - **Locked down**: a Content Security Policy allows scripts only from the app itself and network calls only to the app and api.anthropic.com; the Anthropic SDK is a pinned copy in `js/vendor/` (no third-party CDN).
 - **Fast**: opens instantly from the offline copy and updates itself in the background; pages render in under 40 ms.
