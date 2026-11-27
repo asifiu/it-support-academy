@@ -6,17 +6,25 @@
    - Cisco CCST Networking 100-150 (50 minutes) and CCST IT Support: entry-level Cisco certificates.
    - Microsoft: MD-102, AZ-900, AZ-104 continue. MS-102 retires 30 Nov 2026; AB-650 named as successor (beta).
    - Microsoft Deployment Toolkit (MDT) is retired (Microsoft Learn, Jan 2026): use Autopilot or ConfigMgr OSD. */
+/* Subject areas: how courses are grouped on the Learn page. */
+window.AREAS = [
+  { id: "m365", title: "Microsoft 365", courses: ["m365", "exchange", "collab", "entra", "intune"] },
+  { id: "win", title: "Windows Server and devices", courses: ["ad", "imaging"] },
+  { id: "cloud", title: "Cloud", courses: ["cloud", "azure"] },
+  { id: "linux", title: "Linux", courses: ["linux"] },
+  { id: "net", title: "Networking and Cisco (CCNA)", courses: ["net", "ccna-switch", "ccna-route", "ccna-services", "ccna-security", "ccna-auto"] }
+];
 window.TRACKS = [
   { id: "support", title: "IT Support", role: "Service desk, 1st and 2nd level support, field support",
     goal: "Solve user problems on Windows, Microsoft 365 and the network, and handle tickets the ITIL way.",
     certs: ["Cisco CCST IT Support", "ITIL 4 / Version 5 Foundation", "Microsoft MD-102 (later)"],
-    courses: ["m365", "exchange", "collab", "entra", "intune", "imaging", "net"] },
+    courses: ["m365", "exchange", "collab", "entra", "intune", "imaging", "net", "linux"] },
   { id: "sysadmin", title: "System Administrator", role: "Windows Server, Active Directory, Microsoft 365 and Azure administration",
     goal: "Run the servers, identities and cloud services a company depends on.",
     certs: ["Microsoft AZ-900", "Microsoft MD-102", "Microsoft AZ-104", "Microsoft AB-650 (successor of MS-102)"],
-    courses: ["ad", "m365", "entra", "exchange", "intune", "imaging", "cloud", "net"] },
+    courses: ["ad", "m365", "entra", "exchange", "intune", "imaging", "cloud", "azure", "linux", "net"] },
   { id: "network", title: "Network Engineer", role: "Switching, routing, wireless and network security",
     goal: "Design, configure and troubleshoot Cisco networks to CCNA level.",
     certs: ["Cisco CCST Networking (100-150)", "Cisco CCNA (200-301)"],
-    courses: ["net", "ccna-switch", "ccna-route", "ccna-services", "ccna-security", "ccna-auto", "cloud"] }
+    courses: ["net", "ccna-switch", "ccna-route", "ccna-services", "ccna-security", "ccna-auto", "linux", "cloud", "azure"] }
 ];

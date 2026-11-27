@@ -24,6 +24,7 @@
   </div>
   <button class="icon-btn search-btn" id="searchBtn" aria-label="Search" data-icon="search"></button>
   <button class="top-btn inst-btn" data-install aria-label="Install the app"><span data-icon="download"></span><span class="lbl">Install</span></button>
+  <button class="top-btn ki-btn" id="kiBtn" aria-label="Open the KI tutor"><span data-icon="spark"></span><span class="lbl">KI</span></button>
   <button class="top-btn de-btn" id="deBtn" aria-label="Open German practice panel"><span data-icon="language"></span><span class="lbl">Deutsch</span></button>
 </header>
 
@@ -54,6 +55,13 @@
   </div>
   <div id="deBody"></div>
 </aside>
+<aside class="de-panel ki-panel" id="kiPanel" aria-label="KI tutor">
+  <div class="de-head">
+    <span><span data-icon="spark"></span><strong>KI tutor</strong></span>
+    <button class="icon-btn" id="kiClose" aria-label="Close KI tutor" data-icon="close"></button>
+  </div>
+  <div id="kiBody"></div>
+</aside>
 <div class="scrim" id="scrim"></div>
 
 <nav class="bottom" id="bottomNav" aria-label="Quick">
@@ -67,11 +75,14 @@
 <script src="js/icons.js"></script>
 <script src="js/motion.js"></script>
 <script src="js/trainers.js"></script>
+<script src="js/ki.js"></script>
 <script src="data/diagrams.js"></script>
 <script src="data/plan.js"></script>
 <script src="data/lessons.js"></script>
 <script src="data/itil.js"></script>
 <script src="data/german.js"></script>
+<script src="data/deutsch-a2.js"></script>
+<script src="data/deutsch-b1.js"></script>
 <script src="data/tickets.js"></script>
 <script src="data/interview.js"></script>
 <script src="data/runbooks.js"></script>
@@ -80,6 +91,7 @@
 <script src="data/courses-m365.js"></script>
 <script src="data/courses-sys.js"></script>
 <script src="data/courses-net.js"></script>
+<script src="data/courses-azure-linux.js"></script>
 <script src="data/courses-senior.js"></script>
 <script src="data/tracks.js"></script>
 <script src="js/srs.js"></script>

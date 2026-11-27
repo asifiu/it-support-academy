@@ -208,6 +208,7 @@
     host.innerHTML = `<div class="player">
       <div class="pl-head">
         <div class="pl-bar" role="progressbar" aria-label="Lesson progress" aria-valuemin="1" aria-valuemax="${n}"><i></i></div>
+        <button class="pl-ki" data-open-ki="${cfg.kiMode || "it"}" aria-label="Ask the KI tutor about this step">${ICON("spark")}<span>Ask KI</span></button>
         <button class="pl-count" aria-expanded="false" aria-controls="plToc"></button>
         <ol class="pl-toc" id="plToc" hidden>${steps.map((st, j) => `<li><button data-go="${j}"><span class="pl-dot"></span><span>${esc(st.title)}</span></button></li>`).join("")}</ol>
       </div>
@@ -518,10 +519,152 @@
       <section class="card"><h2>German interview phrases</h2><p>Open the German panel: deck 'Vorstellungsgespräch'.</p><button class="btn ghost" data-open-de="interview">Practise in German</button></section>`;
   };
 
+  /* ---------- German course ---------- */
+  const DL = (window.DEUTSCH && DEUTSCH.levels) || [];
+  const PLANNED = [["A1.1", "A1", "Greetings, family, shopping, flat, daily routine, free time"], ["A1.2", "A1", "Health, directions, travel, weather, clothes, celebrations"],
+    ["A2.2", "A2", "Media, travel, money, services, relationships"], ["B1.2", "B1", "Work life, society, politics, environment, culture"], ["B2", "B2", "Job interviews, presentations, formal writing"]];
+  const allUnits = () => DL.flatMap((l) => l.units.map((u) => Object.assign({ level: l.id }, u)));
+  const unitById = (id) => allUnits().find((u) => u.id === id);
+  const unitDone = (u) => !!S.done["de-" + u.id];
+  const levelPct = (l) => Math.round(l.units.filter(unitDone).length / l.units.length * 100);
   views.german = function () {
-    return `<h1>Deutsch für den IT-Support</h1><p class="muted">Also available from the DE button on every page.</p><div id="deFull">${germanHTML()}</div>`;
+    const order = ["A1.1", "A1.2", "A2.1", "A2.2", "B1.1", "B1.2", "B2"];
+    const rows = order.map((id) => { const l = DL.find((x) => x.id === id); const p = PLANNED.find((x) => x[0] === id); return l ? { l } : { p }; });
+    const next = allUnits().find((u) => !unitDone(u) && S.pos["du-" + u.id] != null) || DL.flatMap((l) => l.units).find((u) => !unitDone(u));
+    return `<h1 class="page-title">Deutsch für den Beruf</h1><p class="muted lead-p">Lesson by lesson: words, grammar, exercises and your own sentences. Each level is harder than the one before. Speak with the KI partner at your level whenever you like.</p>
+      <div class="bento">
+        ${next ? `<a class="card task wide cont" href="#/dunit/${esc(next.id)}"><span class="tic">${ICON("play")}</span><span class="corner">${ICON("arrowRight")}</span><p class="pl-label">Continue</p><h3>${esc(unitById(next.id).level)} Lektion ${next.n}: ${esc(next.title)}</h3><p class="muted small" style="margin:0">${esc(next.goal)}</p></a>` : ""}
+        <button class="card task wide" data-open-ki="de" style="text-align:left;font:inherit;cursor:pointer;width:100%"><span class="tic">${ICON("mic")}</span><span class="corner">${ICON("spark")}</span><p class="pl-label">KI-Gesprächspartner</p><h3>Speak and write with corrections</h3><p class="muted small" style="margin:0">Stays at your level, asks you questions, corrects every mistake</p></button>
+        <button class="card task wide" data-open-de style="text-align:left;font:inherit;cursor:pointer;width:100%"><span class="tic">${ICON("cards")}</span><span class="corner">${ICON("expand")}</span><p class="pl-label">Flashcards</p><h3>${germanDue().length} cards due today</h3><p class="muted small" style="margin:0">Words from your lessons plus workplace phrases</p></button>
+        <a class="card task wide" href="#/handbook"><span class="tic">${ICON("chat")}</span><span class="corner">${ICON("arrowRight")}</span><p class="pl-label">At work</p><h3>German phrases for real tickets</h3><p class="muted small" style="margin:0">Every handbook fix has a sentence for the user</p></a>
+      </div>
+      <div class="sec-h"><h2>Levels</h2><span class="muted small">A1 to B2</span></div>
+      <div class="levels">${rows.map((r) => r.l ? `<section class="card lvlcard"><div class="lvlhead"><span class="lvlbadge">${esc(r.l.id)}</span><div><h3>${esc(r.l.title)}</h3><p class="muted small">${esc(r.l.note)}</p></div><span class="cpct2">${levelPct(r.l)}%</span></div>
+          <div class="cprog"><i style="width:${levelPct(r.l)}%"></i></div>
+          <ol class="units">${r.l.units.map((u) => `<li><a href="#/dunit/${esc(u.id)}" class="${unitDone(u) ? "done" : ""}"><span class="pn">${unitDone(u) ? ICON("check") : u.n}</span><span><strong>${esc(u.title)}</strong><small>${esc(u.grammar.map((g) => g.t).join(" • "))}</small></span></a></li>`).join("")}</ol></section>`
+        : `<section class="card lvlcard soon"><div class="lvlhead"><span class="lvlbadge">${esc(r.p[0])}</span><div><h3>${esc(r.p[0])}</h3><p class="muted small">${esc(r.p[2])}</p></div><span class="lvl">Being written</span></div></section>`).join("")}</div>`;
   };
-  views.german.after = function () { wireGerman($("#deFull")); };
+  views.german.after = function () { MOTION.stagger(view.querySelectorAll(".bento > .card, .lvlcard"), 40); };
+
+  function vocabHTML(list) {
+    return `<ul class="vlist">${list.map(([de, en, ex]) => `<li><div class="vw"><strong>${esc(de)}</strong>${sayBtn(de.split(",")[0].replace(/\s*\(.*\)/, ""))}</div><span class="muted">${esc(en)}</span>${ex ? `<p class="vex">${esc(ex)} ${sayBtn(ex)}</p>` : ""}</li>`).join("")}</ul>`;
+  }
+  function grammarHTML(g) {
+    return `<p>${esc(g.rule)}</p>${g.table ? `<div class="table"><table><thead><tr>${g.table[0].map((c) => `<th>${esc(c)}</th>`).join("")}</tr></thead><tbody>${g.table.slice(1).map((r) => `<tr>${r.map((c, i) => i ? `<td>${esc(c)}</td>` : `<th>${esc(c)}</th>`).join("")}</tr>`).join("")}</tbody></table></div>` : ""}
+      <h3>Beispiele</h3><ul class="dex">${g.ex.map(([d, e]) => `<li><span class="de-line">${esc(d)}</span> ${/[äöüßa-z]/i.test(d) && !/^(Spoken|Compare|Mixed|No zu|Same)/.test(d) ? sayBtn(d) : ""}<br><span class="muted small">${esc(e)}</span></li>`).join("")}</ul>`;
+  }
+  const norm = (x) => String(x).trim().replace(/\s+/g, " ").replace(/[.!?]$/, "");
+  function gapsHTML(drills) {
+    return `<p class="muted">Type the missing word. Press Check.</p><ol class="gaps">${drills.map((d, i) => `<li data-i="${i}"><p>${esc(d.gap).replace("___", `<input class="gapin" aria-label="Answer ${i + 1}" autocomplete="off" autocapitalize="off" spellcheck="false">`)}</p><p class="gfb muted small"></p></li>`).join("")}</ol>
+      <button class="btn gapcheck">Check</button><p class="result gres"></p>`;
+  }
+  function orderHTML(d, i) {
+    const shuffledWords = shuffled(d.order);
+    return `<div class="ord" data-i="${i}"><div class="ord-line" aria-label="Your sentence"></div><div class="ord-bank">${shuffledWords.map((w, k) => `<button class="chip" data-w="${esc(w)}" data-k="${k}">${esc(w)}</button>`).join("")}</div>
+      <div class="ord-act"><button class="btn ghost ord-reset">Start again</button><span class="ord-fb"></span></div>${d.h ? `<p class="muted small">${esc(d.h)}</p>` : ""}</div>`;
+  }
+  function writeHTML(d, i, key) {
+    const saved = S.notes[key + "-w" + i] || "";
+    return `<div class="wr" data-i="${i}"><p class="wr-task"><strong>${esc(d.write)}</strong></p>
+      <textarea class="wr-in" rows="3" placeholder="Schreib hier deine Sätze..." aria-label="Your sentences">${esc(saved)}</textarea>
+      <div class="ord-act"><button class="btn wr-send">${KI.hasKey() ? "Check with KI" : "Submit"}</button><span class="wr-state muted small">${saved ? "Saved" : ""}</span></div><div class="wr-fb"></div></div>`;
+  }
+
+  views.dunit = function (id) {
+    const u = unitById(id); if (!u) return notFound();
+    return `<p class="kicker"><a href="#/german">Deutsch</a> / ${esc(u.level)}</p><h1 class="page-title">Lektion ${u.n}: ${esc(u.title)}</h1><div id="player"></div>`;
+  };
+  views.dunit.after = function (id) {
+    const u = unitById(id); if (!u) return;
+    const key = "du-" + u.id;
+    const half = Math.ceil(u.vocab.length / 2);
+    const gaps = u.drills.filter((d) => d.gap), orders = u.drills.filter((d) => d.order), writes = u.drills.filter((d) => d.write);
+    const steps = [];
+    steps.push({ title: "Was du lernst", label: `${u.level} • Lektion ${u.n}`, html: `<p>${esc(u.goal)}</p><h3>Grammatik</h3><ul>${u.grammar.map((g) => `<li>${esc(g.t)}</li>`).join("")}</ul>
+      <h3>So geht's</h3><ol class="steps"><li>Learn the words and listen to them.</li><li>Read the grammar with the examples.</li><li>Do the exercises.</li><li>Write your own sentences: the lesson is finished only when you have written them.</li></ol>` });
+    steps.push({ title: "Wortschatz 1", label: `${half} Wörter`, html: `<p class="muted">Tap the speaker and repeat out loud. These words go into your flashcards.</p>${vocabHTML(u.vocab.slice(0, half))}` });
+    steps.push({ title: "Wortschatz 2", label: `${u.vocab.length - half} Wörter`, html: vocabHTML(u.vocab.slice(half)) });
+    steps.push({ title: "Wörter-Quiz", label: "Fun check", html: "", after: (art) => vocabQuiz(art.querySelector(".pl-body"), u) });
+    u.grammar.forEach((g, gi) => steps.push({ title: g.t, label: `Grammatik ${gi + 1} von ${u.grammar.length}`, html: grammarHTML(g) }));
+    if (gaps.length) steps.push({ title: "Übung: Lücken füllen", label: "Exercises", html: gapsHTML(gaps), after: (art) => wireGaps(art, gaps, key) });
+    if (orders.length) steps.push({ title: "Übung: Satzbau", label: "Word order", html: `<p class="muted">Tap the words in the right order.</p>${orders.map((d, i) => orderHTML(d, i)).join("")}`, after: (art) => wireOrders(art, orders) });
+    if (writes.length) steps.push({ title: "Sätze bauen", label: "Write your own", html: `<p>Now it is your turn. Write real sentences about YOUR life.${KI.hasKey() ? " The KI checks each one and explains mistakes." : " After submitting, compare with the model answer and correct yourself. (Add your KI key to get personal corrections.)"}</p>${writes.map((d, i) => writeHTML(d, i, key)).join("")}`, after: (art) => wireWrites(art, writes, key, u) });
+    steps.push({ title: "Lektion abschließen", label: "Finish", html: "", after: (art) => {
+      const missing = writes.filter((_, i) => !S.notes[key + "-w" + i]).length;
+      const body = art.querySelector(".pl-body");
+      if (missing) { body.innerHTML = `<div class="done-hero"><span class="done-mark warn">${ICON("alert")}</span><p>Write your own sentences first: ${missing} task${missing > 1 ? "s" : ""} still empty.</p></div><p style="text-align:center"><button class="btn ghost" data-go-back>Back to Sätze bauen</button></p>`;
+        body.querySelector("[data-go-back]").onclick = () => document.querySelector(".pl-back").click(); return; }
+      S.done["de-" + u.id] = true; save();
+      body.innerHTML = `<div class="done-hero"><span class="done-mark">${ICON("check")}</span><p>Lektion ${u.n} geschafft! Super gemacht.</p></div><p class="muted" style="text-align:center">Your new words are now in your flashcards. Practise speaking this topic with the KI partner.</p>
+        <p style="text-align:center"><button class="btn" data-open-ki="de">Talk about "${esc(u.title)}" with KI</button></p>`;
+      MOTION.pop(body.querySelector(".done-mark"));
+    } });
+    const lvl = DL.find((l) => l.id === u.level), idx = lvl.units.indexOf(lvl.units.find((x) => x.id === u.id)), nxt = lvl.units[idx + 1];
+    mountPlayer($("#player"), { key, steps, kiMode: "de", finishLabel: nxt ? "Next lesson" : "Back to Deutsch",
+      onFinish: () => { if (!unitDone(u)) return; location.hash = nxt ? `#/dunit/${nxt.id}` : "#/german"; } });
+  };
+
+  function vocabQuiz(body, u) {
+    const pool = shuffled(u.vocab).slice(0, 6); let i = 0, score = 0;
+    const draw = () => {
+      if (i >= pool.length) { body.innerHTML = `<div class="done-hero"><span class="done-mark">${ICON("trophy")}</span><p>${score} of ${pool.length} right.${score === pool.length ? " Perfekt!" : " Review the words you missed in your flashcards."}</p></div>`; MOTION.pop(body.querySelector(".done-mark")); return; }
+      const q = pool[i], wrong = shuffled(u.vocab.filter((v) => v !== q)).slice(0, 3), opts = shuffled([q].concat(wrong));
+      body.innerHTML = `<p class="pl-label">Wort ${i + 1} von ${pool.length}</p><p class="vq">${esc(q[1])}</p><div class="vqopts">${opts.map((o) => `<button class="chip big" data-ok="${o === q ? 1 : 0}">${esc(o[0].split(",")[0])}</button>`).join("")}</div>`;
+      MOTION.step(body, 1);
+      body.querySelectorAll("[data-ok]").forEach((b) => b.onclick = () => {
+        const ok = b.dataset.ok === "1"; if (ok) score++;
+        b.classList.add(ok ? "good" : "bad"); (ok ? MOTION.pop : MOTION.shake)(b);
+        body.querySelectorAll("[data-ok]").forEach((x) => { x.disabled = true; if (x.dataset.ok === "1") x.classList.add("good"); });
+        setTimeout(() => { i++; draw(); }, ok ? 650 : 1300);
+      });
+    };
+    draw();
+  }
+  function wireGaps(art, gaps, key) {
+    art.querySelector(".gapcheck").onclick = () => {
+      let right = 0;
+      art.querySelectorAll(".gaps li").forEach((li, i) => {
+        const inp = li.querySelector("input"), d = gaps[i], ans = [].concat(d.a), ok = ans.some((x) => norm(x) === norm(inp.value));
+        inp.classList.toggle("good", ok); inp.classList.toggle("bad", !ok);
+        li.querySelector(".gfb").innerHTML = ok ? "" : `Answer: <b>${esc(ans[0])}</b>${d.h ? " • " + esc(d.h) : ""}`;
+        if (ok) right++; else MOTION.shake(inp);
+      });
+      art.querySelector(".gres").textContent = `${right} / ${gaps.length} correct`;
+      S.quiz[key.replace("du-", "de-")] = Math.max(right, S.quiz[key.replace("du-", "de-")] || 0); save();
+    };
+    art.querySelectorAll(".gapin").forEach((inp) => inp.addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); art.querySelector(".gapcheck").click(); } }));
+  }
+  function wireOrders(art, orders) {
+    art.querySelectorAll(".ord").forEach((box) => {
+      const d = orders[+box.dataset.i], line = box.querySelector(".ord-line"), fb = box.querySelector(".ord-fb");
+      const check = () => {
+        const built = [...line.children].map((c) => c.dataset.w).join(" ");
+        if (line.children.length === d.order.length) {
+          const ok = norm(built) === norm(d.a);
+          fb.textContent = ok ? "Richtig!" : "Not yet: " + d.a; fb.className = "ord-fb " + (ok ? "ok" : "no");
+          (ok ? MOTION.pop : MOTION.shake)(line);
+        } else { fb.textContent = ""; fb.className = "ord-fb"; }
+      };
+      box.querySelector(".ord-bank").onclick = (e) => { const b = e.target.closest(".chip"); if (!b || b.disabled) return; const c = b.cloneNode(true); c.onclick = () => { c.remove(); b.disabled = false; check(); }; b.disabled = true; line.appendChild(c); MOTION.animate(c, [{ transform: "scale(.8)", opacity: 0 }, { transform: "none", opacity: 1 }], { duration: 180 }); check(); };
+      box.querySelector(".ord-reset").onclick = () => { line.innerHTML = ""; box.querySelectorAll(".ord-bank .chip").forEach((b) => (b.disabled = false)); check(); };
+    });
+  }
+  function wireWrites(art, writes, key, u) {
+    art.querySelectorAll(".wr").forEach((box) => {
+      const i = +box.dataset.i, d = writes[i], inp = box.querySelector(".wr-in"), state = box.querySelector(".wr-state"), fb = box.querySelector(".wr-fb");
+      box.querySelector(".wr-send").onclick = async () => {
+        const txt = inp.value.trim();
+        if (txt.split(/\s+/).length < 4) { state.textContent = "Please write at least one full sentence."; MOTION.shake(inp); return; }
+        S.notes[key + "-w" + i] = txt.slice(0, 2000); save(); state.textContent = "Saved";
+        if (KI.hasKey()) {
+          fb.innerHTML = '<p class="ki-typing"><i></i><i></i><i></i></p>';
+          try { const r = await KI.checkSentence(d.write, txt, u.level.slice(0, 2)); fb.innerHTML = r ? `<div class="wr-ki">${KI.fmt(r)}</div><p class="muted small">Model answer: ${esc(d.m)}</p>` : `<p class="muted small">Model answer: ${esc(d.m)}</p>`; }
+          catch (e) { fb.innerHTML = `<p class="ki-err">KI check failed. Compare with the model answer:</p><p class="de-line">${esc(d.m)}</p>`; }
+        } else fb.innerHTML = `<p class="muted small">Compare and correct yourself. Model answer:</p><p class="de-line">${esc(d.m)} ${sayBtn(d.m)}</p>`;
+        MOTION.animate(fb, [{ opacity: 0, transform: "translateY(6px)" }, { opacity: 1, transform: "none" }], { duration: 240 });
+      };
+    });
+  }
 
   views.settings = function () {
     return `<h1>Progress &amp; sync</h1>
@@ -573,9 +716,10 @@
       <div class="tracks">${TRACKS.map((t) => `<a class="card track" href="#/track/${esc(t.id)}"><p class="pl-label">Career track</p><h2>${esc(t.title)}</h2><p class="muted">${esc(t.role)}</p>
         <div class="tprog"><span class="num" data-to="${trackPct(t)}">${trackPct(t)}</span><small>% done</small></div><div class="cprog"><i style="width:${trackPct(t)}%"></i></div>
         <p class="small muted">${t.courses.length} courses • ${esc(t.certs[0])}${t.certs.length > 1 ? " and more" : ""}</p></a>`).join("")}</div>
-      <div class="sec-h"><h2>All courses</h2><span class="muted small">${COURSES.length} courses, ${COURSES.reduce((n, c) => n + c.modules.length, 0)} modules</span></div>
-      <div class="cgrid">${COURSES.map(courseCard).join("")}</div>
-      <div class="sec-h"><h2>Also here</h2></div>
+      <div class="sec-h"><h2>Courses by subject</h2><span class="muted small">${COURSES.length} courses, ${COURSES.reduce((n, c) => n + c.modules.length, 0)} modules, ${COURSES.reduce((n, c) => n + c.modules.reduce((k, m) => k + m.quiz.length, 0), 0)} quiz questions</span></div>
+      <nav class="areanav">${(window.AREAS || []).map((a) => `<a href="#area-${a.id}" class="chip">${esc(a.title)}</a>`).join("")}<a href="#area-more" class="chip">Languages and ITIL</a></nav>
+      ${(window.AREAS || []).map((a) => `<section class="area" id="area-${a.id}"><h3 class="area-h">${esc(a.title)}</h3><div class="cgrid">${a.courses.map(course).filter(Boolean).map(courseCard).join("")}</div></section>`).join("")}
+      <section class="area" id="area-more"><h3 class="area-h">Languages and service management</h3></section>
       <div class="cgrid">
         <a class="card ccard" href="#/itil"><span class="tic">${ICON("badge")}</span><h3>ITIL Foundation</h3><p class="muted small">IT service management: 8 lessons and a 40-question mock exam.</p></a>
         <a class="card ccard" href="#/german"><span class="tic">${ICON("language")}</span><h3>German for IT jobs</h3><p class="muted small">Phone support, tickets, interviews; flashcards with spaced repetition.</p></a>
@@ -778,9 +922,10 @@
   function notFound() { return `<h1>Not found</h1><a href="#/today">Back to today</a>`; }
 
   /* ---------- German panel ---------- */
+  (window.DEUTSCH ? DEUTSCH.levels : []).forEach((l) => l.units.forEach((u) => GERMAN.decks.push({ id: "u" + u.id, unit: u.id, title: `${l.id} L${u.n}: ${u.title}`, cards: u.vocab })));
   function allCards() {
     const out = [];
-    GERMAN.decks.forEach((d) => d.cards.forEach((c, i) => out.push({ key: d.id + "-" + i, deck: d.id, c })));
+    GERMAN.decks.forEach((d) => { if (d.unit && S.pos["du-" + d.unit] == null && !S.done["de-" + d.unit]) return; d.cards.forEach((c, i) => out.push({ key: d.id + "-" + i, deck: d.id, c })); });
     return out;
   }
   function germanDue(deck) { return allCards().filter((x) => (!deck || x.deck === deck) && SRS.isDue(S.cards[x.key])); }
@@ -831,17 +976,35 @@
   }
   const panel = $("#dePanel"), scrim = $("#scrim");
   function openDE(deck) {
+    if (window.closeKIpanel) window.closeKIpanel();
     if (deck) { deDeck = deck; deTab = "list"; deQueue = []; }
     $("#deBody").innerHTML = germanHTML(); wireGerman($("#deBody"));
     panel.classList.add("open"); scrim.classList.add("on"); document.body.classList.add("de-open");
   }
   function closeDE() { panel.classList.remove("open"); scrim.classList.remove("on"); document.body.classList.remove("de-open"); }
   $("#deBtn").onclick = () => (panel.classList.contains("open") ? closeDE() : openDE());
+  /* ---------- KI tutor panel ---------- */
+  const kiPanel = $("#kiPanel");
+  KI.setContext(() => {
+    const t = (view.querySelector(".page-title") || view.querySelector("h1") || {}).innerText || "";
+    const step = view.querySelector(".pl-step");
+    return (t + "\n" + (step ? step.innerText : view.innerText)).slice(0, 6000);
+  });
+  function openKI(m) {
+    closeDE(); if (m) KI.setMode(m); KI.render();
+    kiPanel.classList.add("open"); scrim.classList.add("on"); document.body.classList.add("ki-open");
+    setTimeout(() => { const i = $("#kiIn") || $("#kiKey"); if (i) i.focus({ preventScroll: true }); }, 250);
+  }
+  function closeKI() { kiPanel.classList.remove("open"); document.body.classList.remove("ki-open"); if (!panel.classList.contains("open")) scrim.classList.remove("on"); }
+  window.openKI = openKI; window.closeKIpanel = closeKI;
+  $("#kiBtn").onclick = () => (kiPanel.classList.contains("open") ? closeKI() : openKI());
+  $("#kiClose").onclick = closeKI;
+  document.addEventListener("click", (e) => { const b = e.target.closest("[data-open-ki]"); if (b) openKI(b.dataset.openKi); });
   $("#deClose").onclick = closeDE;
-  scrim.onclick = () => { closeDE(); document.body.classList.remove("nav-open"); };
+  scrim.onclick = () => { closeDE(); closeKI(); document.body.classList.remove("nav-open"); };
   document.addEventListener("click", (e) => { const b = e.target.closest("[data-open-de]"); if (b) openDE(b.dataset.openDe); });
   $("#menuBtn").onclick = () => { const o = document.body.classList.toggle("nav-open"); scrim.classList.toggle("on", o); $("#menuBtn").setAttribute("aria-expanded", o); };
-  document.addEventListener("keydown", (e) => { if (e.key === "Escape") { closeDE(); document.body.classList.remove("nav-open"); } });
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape") { closeDE(); closeKI(); document.body.classList.remove("nav-open"); } });
 
   /* ---------- icons in the static layout ---------- */
   document.querySelectorAll("[data-icon]").forEach((el) => el.insertAdjacentHTML("afterbegin", ICON(el.dataset.icon)));
@@ -852,6 +1015,7 @@
   (window.COURSES || []).forEach((c) => { INDEX.push({ t: c.title, s: "Course", h: `#/course/${c.id}`, ic: "book", k: c.title + " " + c.short + " " + c.cert });
     c.modules.forEach((m) => INDEX.push({ t: m.title, s: c.title, h: `#/module/${c.id}/${m.id}`, ic: "book", k: m.title + " " + m.blocks.filter((b) => b[0] === "h" || b[0] === "one").map((b) => b[1]).join(" ") })); });
   (window.TRAINERS ? TRAINERS.LABS : []).forEach((l) => INDEX.push({ t: l.title, s: "Cisco CLI practice", h: `#/cli/${l.id}`, ic: "server", k: l.title + " " + l.intro + " cisco ios cli" }));
+  allUnits().forEach((u) => INDEX.push({ t: `${u.level} Lektion ${u.n}: ${u.title}`, s: "Deutsch", h: `#/dunit/${u.id}`, ic: "language", k: u.title + " " + u.grammar.map((g) => g.t).join(" ") + " " + u.vocab.map((v) => v[0] + " " + v[1]).join(" ") }));
   INDEX.push({ t: "Subnetting trainer", s: "Practice", h: "#/subnet", ic: "grid", k: "subnet subnetting ipv4 mask cidr" });
   (window.GUIDES || []).forEach((g) => INDEX.push({ t: g.title, s: "Software guide", h: `#/guides/${g.id}`, ic: "book", k: g.title + " " + g.short }));
   (window.RUNBOOKS || []).forEach((r) => INDEX.push({ t: r.title, s: "Office handbook · " + r.cat, h: `#/handbook/rb/${r.id}`, ic: "library", k: r.title + " " + r.tags + " " + r.symptom }));
@@ -901,7 +1065,7 @@
     if (v.after) v.after.apply(null, args);
     MOTION.page(view);
     view.querySelectorAll("svg.diagram").forEach((g) => MOTION.draw(g));
-    document.querySelectorAll("[data-route]").forEach((a) => a.classList.toggle("on", a.dataset.route === name || (name === "day" && a.dataset.route === "plan") || (name === "quiz" && a.dataset.route === "plan") || (["track", "course", "module"].includes(name) && a.dataset.route === "learn") || (["cli", "subnet", "tickets", "labs", "interview"].includes(name) && a.dataset.route === "practice")));
+    document.querySelectorAll("[data-route]").forEach((a) => a.classList.toggle("on", a.dataset.route === name || (name === "day" && a.dataset.route === "plan") || (name === "quiz" && a.dataset.route === "plan") || (["track", "course", "module"].includes(name) && a.dataset.route === "learn") || (["cli", "subnet", "tickets", "labs", "interview"].includes(name) && a.dataset.route === "practice") || (name === "dunit" && a.dataset.route === "german")));
     if (window.innerWidth <= 760) closeDE();
     document.body.classList.remove("nav-open"); if (!panel.classList.contains("open")) scrim.classList.remove("on");
     window.scrollTo(0, 0);
