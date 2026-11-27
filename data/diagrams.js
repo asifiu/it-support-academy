@@ -208,5 +208,43 @@
     `<rect x="160" y="306" width="14" height="14" rx="3" class="d-box soft"/>` + label(182, 318, "Provider manages", "start"),
     "Shared responsibility by cloud model");
 
+
+  D.signin = svg(300,
+    box(20, 20, 150, 56, "User + browser\nopens the app", "soft") + arrow(170, 48, 238, 48, "1 not signed in") +
+    box(240, 20, 160, 56, "App (SP / client)\nSalesforce, Jira...") + arrow(320, 76, 320, 116, "2 redirect to IdP") +
+    box(220, 118, 200, 64, "Identity provider\nEntra ID: password + MFA\n+ Conditional Access", "hi") +
+    arrow(220, 150, 172, 150, "3 sign in") + box(20, 122, 150, 56, "User proves\nwho they are", "soft") +
+    arrow(420, 150, 470, 150) + box(472, 118, 150, 64, "4 token\nSAML assertion or\nOIDC ID token", "ok") +
+    arrow(546, 182, 546, 230) + arrow(546, 250, 402, 250) +
+    box(240, 228, 160, 50, "5 app trusts the token\nuser is in, no password", "ok") + label(546, 214, "back via browser", "start"),
+    "Single sign-on: the app never sees the password");
+
+  D.jml = svg(250,
+    box(20, 30, 180, 70, "Joiner\nHR record created\naccount + groups + licence", "hi") + arrow(200, 65, 228, 65) +
+    box(230, 30, 180, 70, "Mover\nnew role: add new access\nREMOVE the old access") + arrow(410, 65, 438, 65) +
+    box(440, 30, 180, 70, "Leaver\nblock sign-in, revoke\nsessions, collect device", "warn") +
+    arrow(320, 100, 320, 150) + box(170, 152, 300, 56, "Access reviews every quarter\nmanagers confirm who still needs what", "ok") +
+    label(320, 232, "HR is the source of truth; IAM follows HR, not emails"),
+    "Identity lifecycle: joiner, mover, leaver");
+
+  D.mdm = svg(260,
+    box(10, 30, 140, 64, "1 Enrol\nAutopilot, ADE,\nAndroid Enterprise", "hi") + arrow(150, 62, 168, 62) +
+    box(170, 30, 140, 64, "2 Configure\nprofiles, apps,\nupdates") + arrow(310, 62, 328, 62) +
+    box(330, 30, 140, 64, "3 Check\ncompliance policy\nencrypted? patched?") + arrow(470, 62, 488, 62) +
+    box(490, 30, 140, 64, "4 Gate access\nConditional Access:\ncompliant only", "ok") +
+    arrow(400, 94, 400, 150, "not compliant") + box(300, 152, 200, 56, "Block mail and Teams\nuser fixes it in Company Portal", "warn") +
+    arrow(80, 94, 80, 150) + box(10, 152, 210, 56, "End of life: retire or wipe\nremove company data", "soft"),
+    "Device management chain");
+
+  D.ticket = svg(260,
+    box(10, 30, 110, 50, "New\nlogged", "soft") + arrow(120, 55, 138, 55) +
+    box(140, 30, 110, 50, "Assigned\nto a group") + arrow(250, 55, 268, 55) +
+    box(270, 30, 110, 50, "In progress\nagent works", "hi") + arrow(380, 55, 398, 55) +
+    box(400, 30, 110, 50, "Resolved\nuser confirms", "ok") + arrow(510, 55, 528, 55) +
+    box(530, 30, 100, 50, "Closed\nauto after\n3-5 days", "soft") +
+    arrow(325, 80, 325, 140) + box(250, 142, 150, 50, "Pending\nwaiting for user,\nSLA clock paused", "warn") +
+    arrow(300, 142, 300, 82) + `<path d="M 455 80 C 455 130, 420 130, 400 110" class="d-a dash" marker-end="url(#ah)"/>` + label(470, 120, "reopened: not fixed", "start") +
+    label(320, 230, "Every status change and every note is written in the ticket"),
+    "Ticket lifecycle");
   window.DIAGRAMS = D;
 })();

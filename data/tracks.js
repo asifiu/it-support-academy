@@ -8,6 +8,7 @@
    - Microsoft Deployment Toolkit (MDT) is retired (Microsoft Learn, Jan 2026): use Autopilot or ConfigMgr OSD. */
 /* Subject areas: how courses are grouped on the Learn page. */
 window.AREAS = [
+  { id: "ops", title: "Identity, devices and service desk", courses: ["itsm", "iam", "mdm"] },
   { id: "m365", title: "Microsoft 365", courses: ["m365", "exchange", "collab", "entra", "intune"] },
   { id: "win", title: "Windows Server and devices", courses: ["ad", "imaging"] },
   { id: "cloud", title: "Cloud", courses: ["cloud", "azure"] },
@@ -18,11 +19,11 @@ window.TRACKS = [
   { id: "support", title: "IT Support", role: "Service desk, 1st and 2nd level support, field support",
     goal: "Solve user problems on Windows, Microsoft 365 and the network, and handle tickets the ITIL way.",
     certs: ["Cisco CCST IT Support", "ITIL 4 / Version 5 Foundation", "Microsoft MD-102 (later)"],
-    courses: ["m365", "exchange", "collab", "entra", "intune", "imaging", "net", "linux"] },
+    courses: ["itsm", "m365", "exchange", "collab", "iam", "entra", "mdm", "intune", "imaging", "net", "linux"] },
   { id: "sysadmin", title: "System Administrator", role: "Windows Server, Active Directory, Microsoft 365 and Azure administration",
     goal: "Run the servers, identities and cloud services a company depends on.",
     certs: ["Microsoft AZ-900", "Microsoft MD-102", "Microsoft AZ-104", "Microsoft AB-650 (successor of MS-102)"],
-    courses: ["ad", "m365", "entra", "exchange", "intune", "imaging", "cloud", "azure", "linux", "net"] },
+    courses: ["ad", "iam", "m365", "entra", "exchange", "mdm", "intune", "imaging", "itsm", "cloud", "azure", "linux", "net"] },
   { id: "network", title: "Network Engineer", role: "Switching, routing, wireless and network security",
     goal: "Design, configure and troubleshoot Cisco networks to CCNA level.",
     certs: ["Cisco CCST Networking (100-150)", "Cisco CCNA (200-301)"],
@@ -33,13 +34,13 @@ window.TRACKS = [
 window.JOURNEYS = {
   support: { dest: "IT Support Specialist", stages: [
     { title: "Basecamp", tag: "Where every IT legend starts: with a printer that will not print.", courses: ["net", "m365"] },
-    { title: "The Help Desk Valley", tag: "Tickets, Outlook and the eternal question: did you restart it?", courses: ["exchange", "collab"], check: "ITIL Foundation" },
-    { title: "Identity Ridge", tag: "Passwords, MFA and people who forgot both.", courses: ["entra", "intune"] },
+    { title: "The Help Desk Valley", tag: "Tickets, Outlook and the eternal question: did you restart it?", courses: ["itsm", "exchange", "collab"], check: "ITIL Foundation" },
+    { title: "Identity Ridge", tag: "Passwords, MFA and people who forgot both.", courses: ["iam", "entra", "mdm", "intune"] },
     { title: "The Deployment Pass", tag: "Laptops for everyone, set up while you drink coffee.", courses: ["imaging", "linux"], check: "Cisco CCST IT Support" } ] },
   sysadmin: { dest: "System Administrator", stages: [
     { title: "Basecamp", tag: "Learn the network before it learns your weaknesses.", courses: ["net", "ad"] },
-    { title: "Microsoft Highlands", tag: "Tenants, mailboxes and the art of least privilege.", courses: ["m365", "entra", "exchange"], check: "AZ-900" },
-    { title: "Endpoint Forest", tag: "Every device managed, no device left behind.", courses: ["intune", "imaging"], check: "MD-102" },
+    { title: "Microsoft Highlands", tag: "Tenants, mailboxes and the art of least privilege.", courses: ["m365", "iam", "entra", "exchange"], check: "AZ-900" },
+    { title: "Endpoint Forest", tag: "Every device managed, no device left behind.", courses: ["mdm", "intune", "imaging", "itsm"], check: "MD-102" },
     { title: "Cloud Summit", tag: "Above the clouds, the bill is still real.", courses: ["cloud", "azure"], check: "AZ-104" },
     { title: "Penguin Plateau", tag: "sudo make me a sandwich.", courses: ["linux"] } ] },
   network: { dest: "Network Engineer", stages: [
