@@ -34,7 +34,8 @@ Each run: take the next course below and grow it into a full road: at least 3 Fo
 - [ ] A1.2: Lektion 8 to 14
 - [ ] B2: job interview, presentations, formal emails and reports
 - [ ] More Deutsch Arcade games: listening quiz with IT phone calls, Präpositionen-Sprint, Adjektivendungen-Duell
-- [ ] IT vocabulary pack: 300 workplace words by topic (hardware, network, M365, tickets, security)
+- [x] IT vocabulary pack: done inside Wortschatz (2000 words, data/wortschatz-*.js)
+- [ ] Wortschatz: grow to 3000 words (B1.2 and B2 topics: health system, environment debate, job interview, contracts); append new topics in a new file, never reorder existing words (progress keys use the position)
 - [ ] Listening practice: short dialogues read by the speech engine with comprehension questions
 
 ## IT courses (priority 3)

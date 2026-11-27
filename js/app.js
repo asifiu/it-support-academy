@@ -5,10 +5,10 @@
 
   /* ---------- state ---------- */
   const KEY = "itsa-v1";
-  const blank = { start: null, done: {}, quiz: {}, itil: {}, cards: {}, tickets: {}, notes: {}, pos: {}, days: {}, xp: 0 };
+  const blank = { start: null, done: {}, quiz: {}, itil: {}, cards: {}, tickets: {}, notes: {}, pos: {}, days: {}, xp: 0, wd: null, wdd: {} };
   /* Keep only well-formed values, so an edited or foreign progress file cannot inject HTML. */
   function clean(d) {
-    const out = { start: null, done: {}, quiz: {}, itil: {}, cards: {}, tickets: {}, notes: {}, pos: {}, days: {}, xp: 0 };
+    const out = { start: null, done: {}, quiz: {}, itil: {}, cards: {}, tickets: {}, notes: {}, pos: {}, days: {}, xp: 0, wd: null, wdd: {} };
     if (!d || typeof d !== "object") return out;
     const obj = (o) => (o && typeof o === "object" && !Array.isArray(o) ? o : {});
     const safeKey = (k) => /^[A-Za-z0-9-]{1,40}$/.test(k);
@@ -21,6 +21,13 @@
     if (Number.isInteger(d.xp) && d.xp >= 0 && d.xp < 1e7) out.xp = d.xp;
     for (const [k, v] of Object.entries(obj(d.pos))) if (/^[A-Za-z0-9:-]{1,40}$/.test(k) && Number.isInteger(v) && v >= 0 && v < 500) out.pos[k] = v;
     for (const [k, v] of Object.entries(obj(d.notes))) if (safeKey(k) && typeof v === "string") out.notes[k] = v.slice(0, 20000);
+    /* Wortschatz daily duty: today's word keys, step, test score and the user's own sentences (plain text, escaped on output). */
+    for (const [k, v] of Object.entries(obj(d.wdd))) if (/^\d{4}-\d{2}-\d{2}$/.test(k) && v === 1) out.wdd[k] = 1;
+    const w = obj(d.wd);
+    if (typeof w.d === "string" && /^\d{4}-\d{2}-\d{2}$/.test(w.d) && Array.isArray(w.k)) out.wd = {
+      d: w.d, k: w.k.filter((x) => typeof x === "string" && safeKey(x)).slice(0, 40), step: [0, 1, 2, 3].includes(w.step) ? w.step : 0,
+      p: Number.isInteger(w.p) && w.p >= 0 && w.p < 40 ? w.p : 0, t: Number.isInteger(w.t) && w.t >= 0 && w.t <= 40 ? w.t : 0,
+      s: (Array.isArray(w.s) ? w.s : []).filter((x) => typeof x === "string").slice(0, 3).map((x) => x.slice(0, 400)) };
     return out;
   }
   let S;
@@ -660,9 +667,10 @@
     const order = ["A1.1", "A1.2", "A2.1", "A2.2", "B1.1", "B1.2", "B2"];
     const rows = order.map((id) => { const l = DL.find((x) => x.id === id); const p = PLANNED.find((x) => x[0] === id); return l ? { l } : { p }; });
     const next = allUnits().find((u) => !unitDone(u) && S.pos["du-" + u.id] != null) || DL.flatMap((l) => l.units).find((u) => !unitDone(u));
-    return `<h1 class="page-title">Deutsch für den Beruf</h1><p class="muted lead-p">Lesson by lesson: words, grammar, exercises and your own sentences. Each level is harder than the one before. Speak with the KI partner at your level whenever you like.</p>
+    return `${WS ? WS.dutyBanner() : ""}<h1 class="page-title">Deutsch für den Beruf</h1><p class="muted lead-p">Lesson by lesson: words, grammar, exercises and your own sentences. Each level is harder than the one before. Speak with the KI partner at your level whenever you like.</p>
       <div class="bento">
         ${next ? `<a class="card task wide cont" href="#/dunit/${esc(next.id)}"><span class="tic">${ICON("play")}</span><span class="corner">${ICON("arrowRight")}</span><p class="pl-label">Continue</p><h3>${esc(unitById(next.id).level)} Lektion ${next.n}: ${esc(next.title)}</h3><p class="muted small" style="margin:0">${esc(next.goal)}</p></a>` : ""}
+        ${WS ? `<a class="card task wide" href="#/wort"><span class="tic">${ICON("list")}</span><span class="corner">${ICON("arrowRight")}</span><p class="pl-label">Wortschatz</p><h3>${WS.total} words with English and বাংলা</h3><p class="muted small" style="margin:0">Shuffle cards, word list, Play all and your Tagesziel</p></a>` : ""}
         <a class="card task wide" href="#/arcade"><span class="tic">${ICON("target")}</span><span class="corner">${ICON("arrowRight")}</span><p class="pl-label">Deutsch Arcade</p><h3>Play: der/die/das, Memory, Diktat, Verben</h3><p class="muted small" style="margin:0">Fast games, every point is XP</p></a>
         <button class="card task wide" data-open-ki="de" style="text-align:left;font:inherit;cursor:pointer;width:100%"><span class="tic">${ICON("mic")}</span><span class="corner">${ICON("spark")}</span><p class="pl-label">KI-Gesprächspartner</p><h3>Speak and write with corrections</h3><p class="muted small" style="margin:0">Stays at your level, asks you questions, corrects every mistake</p></button>
         <button class="card task wide" data-open-de style="text-align:left;font:inherit;cursor:pointer;width:100%"><span class="tic">${ICON("cards")}</span><span class="corner">${ICON("expand")}</span><p class="pl-label">Flashcards</p><h3>${germanDue().length} cards due today</h3><p class="muted small" style="margin:0">Words from your lessons plus workplace phrases</p></button>
@@ -822,7 +830,7 @@
         catch (err) { $("#sMsg").textContent = "That file is not an IT Academy progress file."; }
       });
     };
-    $("#reset").onclick = () => { if (confirm("Delete all progress on this device? Export first if you want a copy.")) { S = Object.assign({}, blank); save(); render(); } };
+    $("#reset").onclick = () => { if (confirm("Delete all progress on this device? Export first if you want a copy.")) { S = clean(null); save(); render(); } };
   };
 
 
@@ -837,6 +845,8 @@
       Object.keys(S.done).forEach((k) => { if (k.startsWith("lab-")) x += 150; else if (/^\d+-\d+-(teach|learn|lab|check)$/.test(k)) x += 25; });
       Object.values(S.itil).forEach((v) => { x += v * 10; });
       Object.values(S.tickets).forEach((v) => { x += v * 10; });
+      Object.entries(S.cards).forEach(([k, v]) => { if (k.startsWith("w-") && v.box >= 4) x += 5; });
+      x += Object.keys(S.wdd || {}).length * 50;
       return x;
     }
     function rank(x) {
@@ -1230,6 +1240,16 @@
   /* ---------- icons in the static layout ---------- */
   document.querySelectorAll("[data-icon]").forEach((el) => el.insertAdjacentHTML("afterbegin", ICON(el.dataset.icon)));
 
+  /* ---------- Wortschatz (js/wortschatz.js) ---------- */
+  const WS = window.WORTSCHATZ_APP ? WORTSCHATZ_APP({ state: () => S, save, esc, ICON, sayBtn, MOTION, shuffled }) : null;
+  if (WS) {
+    Object.assign(views, WS.views);
+    // The daily duty sits on top of Today until it is done.
+    const todayView = views.today, todayAfter = views.today.after;
+    views.today = function () { return WS.dutyBanner() + todayView.apply(null, arguments); };
+    views.today.after = todayAfter;
+  }
+
   /* ---------- global search ---------- */
   const INDEX = [];
   PLAN.forEach((w) => w.days.forEach((d, i) => INDEX.push({ t: d.title, s: `Week ${w.id}, day ${i + 1}`, h: `#/day/${w.id}/${i + 1}`, ic: "calendar", k: d.title + " " + d.learn.join(" ") })));
@@ -1290,12 +1310,13 @@
     const v = views[name] || notFound;
     view.innerHTML = v.apply(null, args);
     if (v.after) v.after.apply(null, args);
-    const depth = parts.filter(Boolean).length + (["track", "course", "module", "dunit", "game", "cli", "day", "quiz"].includes(name) ? 1 : 0);
+    const depth = parts.filter(Boolean).length + (["track", "course", "module", "dunit", "game", "cli", "day", "quiz", "wcards", "wlist", "wday"].includes(name) ? 1 : 0);
     MOTION.push(view, prevDepth == null ? 0 : depth > prevDepth ? 1 : depth < prevDepth ? -1 : 0); prevDepth = depth;
     view.querySelectorAll("svg.diagram").forEach((g) => MOTION.draw(g));
-    document.querySelectorAll("[data-route]").forEach((a) => a.classList.toggle("on", a.dataset.route === name || (name === "day" && a.dataset.route === "plan") || (name === "quiz" && a.dataset.route === "plan") || (["track", "course", "module"].includes(name) && a.dataset.route === "learn") || (["cli", "subnet", "tickets", "labs", "interview"].includes(name) && a.dataset.route === "practice") || (["dunit", "arcade", "game"].includes(name) && a.dataset.route === "german")));
+    document.querySelectorAll("[data-route]").forEach((a) => a.classList.toggle("on", a.dataset.route === name || (name === "day" && a.dataset.route === "plan") || (name === "quiz" && a.dataset.route === "plan") || (["track", "course", "module"].includes(name) && a.dataset.route === "learn") || (["cli", "subnet", "tickets", "labs", "interview"].includes(name) && a.dataset.route === "practice") || (["dunit", "arcade", "game", "wort", "wcards", "wlist", "wday"].includes(name) && a.dataset.route === "german")));
     if (window.innerWidth <= 760) closeDE();
     document.body.classList.remove("nav-open"); if (!panel.classList.contains("open")) scrim.classList.remove("on");
+    if (WS) document.querySelectorAll('[data-route="german"]').forEach((a) => a.classList.toggle("duty-due", !WS.dutyDone()));
     window.scrollTo(0, 0);
   }
   window.addEventListener("hashchange", render);
