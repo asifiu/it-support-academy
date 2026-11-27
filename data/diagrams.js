@@ -178,5 +178,35 @@
     label(320, 128, "Enforced GPOs win over everything below. 'Block inheritance' stops non-enforced ones."),
     "Group Policy order");
 
+
+  D.osi = svg(370,
+    label(110, 22, "OSI model", "middle", "d-ft") + label(330, 22, "TCP/IP", "middle", "d-ft") + label(530, 22, "Examples", "middle", "d-ft") +
+    box(20, 34, 180, 38, "7 Application") + box(20, 76, 180, 38, "6 Presentation") + box(20, 118, 180, 38, "5 Session") +
+    box(240, 34, 180, 122, "Application", "hi") + label(530, 99, "HTTP, DNS, SSH, SMTP, TLS") +
+    box(20, 160, 180, 38, "4 Transport") + box(240, 160, 180, 38, "Transport", "hi") + label(530, 184, "TCP, UDP: ports, segments") +
+    box(20, 202, 180, 38, "3 Network") + box(240, 202, 180, 38, "Internet", "hi") + label(530, 226, "IP, ICMP: packets, routers") +
+    box(20, 244, 180, 38, "2 Data link") + box(20, 286, 180, 38, "1 Physical") + box(240, 244, 180, 80, "Network access", "hi") +
+    label(530, 268, "Ethernet, Wi-Fi, MAC: frames, switches") + label(530, 310, "Cables, fibre, radio: bits") +
+    label(320, 356, "Troubleshoot bottom-up: cable, link, IP, port, application"),
+    "OSI and TCP/IP layers");
+
+  D.vlan = svg(300,
+    box(60, 110, 160, 60, "Switch 1", "hi") + box(420, 110, 160, 60, "Switch 2", "hi") +
+    `<line x1="220" y1="140" x2="420" y2="140" class="d-a" stroke-width="4"/>` + label(320, 128, "Trunk 802.1Q: VLAN 10 + 20 tagged") +
+    box(10, 220, 110, 50, "PC Sales\nVLAN 10") + box(150, 220, 110, 50, "PC HR\nVLAN 20", "soft") + box(380, 220, 110, 50, "PC Sales\nVLAN 10") + box(520, 220, 110, 50, "PC HR\nVLAN 20", "soft") +
+    line(65, 220, 110, 170) + line(205, 220, 170, 170) + line(435, 220, 470, 170) + line(575, 220, 540, 170) +
+    label(140, 205, "access ports") + label(500, 205, "access ports") +
+    box(240, 20, 160, 50, "Router / L3 switch\nroutes between VLANs", "soft") + line(320, 70, 320, 140, "d-line soft") +
+    label(320, 292, "Sales PCs talk to each other directly; Sales to HR must pass the router"),
+    "VLANs and a trunk");
+
+  D.cloudmodels = svg(330,
+    label(95, 22, "On-premises", "middle", "d-ft") + label(255, 22, "IaaS", "middle", "d-ft") + label(415, 22, "PaaS", "middle", "d-ft") + label(570, 22, "SaaS", "middle", "d-ft") +
+    [["Data and access", 0, 0, 0, 0], ["Application", 0, 0, 0, 1], ["Runtime", 0, 0, 1, 1], ["Operating system", 0, 0, 1, 1], ["Virtualisation", 0, 1, 1, 1], ["Servers, storage", 0, 1, 1, 1], ["Network, datacentre", 0, 1, 1, 1]]
+      .map((r, i) => [20, 180, 340, 500].map((x, c) => box(x, 34 + i * 38, 140, 32, r[0], r[c + 1] ? "soft" : "hi")).join("")).join("") +
+    `<rect x="20" y="306" width="14" height="14" rx="3" class="d-box hi"/>` + label(42, 318, "You manage", "start") +
+    `<rect x="160" y="306" width="14" height="14" rx="3" class="d-box soft"/>` + label(182, 318, "Provider manages", "start"),
+    "Shared responsibility by cloud model");
+
   window.DIAGRAMS = D;
 })();

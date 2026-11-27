@@ -268,17 +268,27 @@
   /* ---------- views ---------- */
   const views = {};
 
+  function continueCard() {
+    let last = null; try { last = JSON.parse(localStorage.getItem("itsa-last") || "null"); } catch (e) { last = null; }
+    if (last && typeof last.h === "string" && /^#\/module\/[a-z0-9-]+\/[a-z0-9-]+$/.test(last.h))
+      return `<a class="card task wide cont" href="${last.h}"><span class="tic">${ICON("play")}</span><span class="corner">${ICON("arrowRight")}</span><p class="pl-label">Continue where you stopped</p><h3>${esc(last.t)}</h3><p class="muted small" style="margin:0">${esc(last.c)}</p></a>`;
+    return `<a class="card task wide cont" href="#/learn"><span class="tic">${ICON("target")}</span><span class="corner">${ICON("arrowRight")}</span><p class="pl-label">Start learning</p><h3>Choose your career track</h3><p class="muted small" style="margin:0">IT Support, System Administrator or Network Engineer</p></a>`;
+  }
   views.today = function () {
     const p = position();
     const go = (href, icon, text) => `<a class="go" href="${href}"><span class="dot">${ICON(icon)}</span>${text}<span class="chev">${ICON("chevrons")}</span></a>`;
     if (!p) {
-      const next = mondayOf(new Date(Date.now() + 7 * 86400000));
-      return `<section class="card hello"><div><div class="who"><span class="av">${ICON("server")}</span><span><small>IT Support Academy</small><b>8 weeks to job-ready</b></span></div>
-          <h1>Your own lab, one day at a time</h1><p class="sub">Built from 55 real job ads in Germany. Each day: 1 hour learning, 2 hours hands-on lab, 30 minutes ITIL, 30 minutes German.</p></div></section>
-        <section class="card"><h2>Choose your start date</h2>
-          <label class="field">Week 1 begins on this Monday<input type="date" id="startDate" value="${isoDate(new Date().getDay() === 1 ? new Date() : next)}"></label>
-          <p class="muted small">Preset to the next Monday. Any Monday works.</p>
-          <button class="go" id="startBtn"><span class="dot">${ICON("play")}</span>Start my plan<span class="chev">${ICON("chevrons")}</span></button></section>`;
+      const tp = TRACKS.map((t) => [t, trackPct(t)]).sort((a, b) => b[1] - a[1])[0];
+      return `<section class="card hello"><div><div class="who"><span class="av">${ICON("server")}</span><span><small>IT Support Academy</small><b>Your career in IT, step by step</b></span></div>
+          <h1>Learn it, practise it, get the job</h1><p class="sub">Three career tracks, ${COURSES.length} courses from foundation to senior level, Cisco and Microsoft exam topics, hands-on labs and German for the workplace.</p>
+          <a class="go" href="#/learn"><span class="dot">${ICON("target")}</span>Open the career tracks<span class="chev">${ICON("chevrons")}</span></a></div>
+          <div class="gauge"><small>${esc(tp[0].title)} track</small><b><span class="num" data-to="${tp[1]}">${tp[1]}</span>%</b>${bar(tp[1])}<div class="scale"><span>0</span><span>${esc(tp[0].certs[0])}</span></div></div></section>
+        <div class="sec-h"><h2>Pick up from here</h2></div>
+        <div class="bento">${continueCard()}
+          <a class="card task wide" href="#/practice"><span class="tic">${ICON("server")}</span><span class="corner">${ICON("arrowRight")}</span><p class="pl-label">Practice</p><h3>Cisco CLI labs and subnetting</h3><p class="muted small" style="margin:0">Type real commands; every task is checked live</p></a>
+          <button class="card task wide" data-open-de style="text-align:left;font:inherit;cursor:pointer;width:100%"><span class="tic">${ICON("language")}</span><span class="corner">${ICON("expand")}</span><p class="pl-label">Deutsch</p><h3>${germanDue().length} German cards due</h3><p class="muted small" style="margin:0">Workplace phrases with spaced repetition</p></button>
+          <a class="card task wide" href="#/handbook"><span class="tic">${ICON("library")}</span><span class="corner">${ICON("arrowRight")}</span><p class="pl-label">At work</p><h3>Office handbook</h3><p class="muted small" style="margin:0">Fixes for real tickets, with commands and German phrases</p></a>
+        </div>`;
     }
     if (p.before) return `<section class="card hello"><div><div class="who"><span class="av">${ICON("clock")}</span><span><small>Starts soon</small><b>${p.days} day${p.days === 1 ? "" : "s"} to go</b></span></div>
       <h1>Get the lab ready before Monday</h1><p class="sub">Switch on Hyper-V and download the evaluation ISOs (Week 1, Day 2).</p>${go("#/day/1/1", "book", "Read the first lesson early")}</div></section>`;
@@ -318,6 +328,7 @@
       <div class="weekstrip">${strip}</div>
       <div class="sec-h"><h2>Your routine</h2></div>
       <div class="bento">
+        ${continueCard()}
         <a class="card task wide" href="#/itil/${esc(itil.id)}"><span class="tic">${ICON("badge")}</span><span class="corner">${ICON("expand")}</span>
           <h3>ITIL ${esc(itil.id)}: ${esc(itil.title)}</h3><p class="muted small" style="margin:0">30 minutes${S.itil[itil.id] != null ? `, best quiz score ${S.itil[itil.id]}` : ", notes then quiz"}</p></a>
         <button class="card task wide" data-open-de style="text-align:left;font:inherit;cursor:pointer;width:100%"><span class="tic">${ICON("language")}</span><span class="corner">${ICON("expand")}</span>
@@ -340,7 +351,10 @@
 
   views.plan = function () {
     const p = position();
-    return `<h1>8-week plan</h1><p class="muted">Each weekday is one guided flow: lesson, key points, lab and self-check. Saturday is the weekly test.</p>
+    const startForm = S.start ? "" : `<section class="card"><h2>Use the 8-week quick start?</h2><p class="muted">Optional. It gives you a fixed daily schedule with a home lab. Your career tracks work without it.</p>
+      <label class="field">Week 1 begins on this Monday<input type="date" id="startDate" value="${isoDate(new Date().getDay() === 1 ? new Date() : mondayOf(new Date(Date.now() + 7 * 86400000)))}"></label>
+      <button class="go" id="startBtn"><span class="dot">${ICON("play")}</span>Start the quick start<span class="chev">${ICON("chevrons")}</span></button></section>`;
+    return `${startForm}<h1>8-week plan</h1><p class="muted">Each weekday is one guided flow: lesson, key points, lab and self-check. Saturday is the weekly test.</p>
       ${PLAN.map((wk) => {
         const done = wk.days.filter((_, i) => dayDone(wk.id, i + 1)).length;
         return `<details class="card week" ${p && p.week === wk.id ? "open" : ""}>
@@ -351,6 +365,10 @@
       }).join("")}`;
   };
 
+  views.plan.after = function () {
+    const b = $("#startBtn");
+    if (b) b.onclick = () => { S.start = $("#startDate").value || isoDate(new Date()); save(); location.hash = "#/today"; };
+  };
   views.day = function (w, d) {
     w = +w; d = +d;
     const wk = PLAN[w - 1]; if (!wk) return notFound();
@@ -532,6 +550,119 @@
     };
     $("#reset").onclick = () => { if (confirm("Delete all progress on this device? Export first if you want a copy.")) { S = Object.assign({}, blank); save(); render(); } };
   };
+
+
+  /* ---------- Learn: career tracks, courses, modules ---------- */
+  const COURSES = window.COURSES || [], TRACKS = window.TRACKS || [];
+  const course = (id) => COURSES.find((c) => c.id === id);
+  const modKey = (cid, mid) => `c-${cid}-${mid}`;
+  const modLevel = (c, m) => m.level || (c.level === "Beginner" ? "Foundation" : "Professional");
+  const coursePct = (c) => Math.round(c.modules.filter((m) => S.done[modKey(c.id, m.id)]).length / c.modules.length * 100);
+  const trackPct = (t) => { const cs = t.courses.map(course).filter(Boolean); const all = cs.reduce((n, c) => n + c.modules.length, 0); const d = cs.reduce((n, c) => n + c.modules.filter((m) => S.done[modKey(c.id, m.id)]).length, 0); return all ? Math.round(d / all * 100) : 0; };
+  const levelPill = (l) => `<span class="lvl lvl-${l.toLowerCase()}">${l}</span>`;
+  function nextModule(c) { return c.modules.find((m) => !S.done[modKey(c.id, m.id)]) || c.modules[0]; }
+  function courseCard(c) {
+    const pct = coursePct(c);
+    return `<a class="card ccard" href="#/course/${esc(c.id)}"><span class="tic">${ICON(c.icon || "book")}</span>
+      <h3>${esc(c.title)}</h3><p class="muted small">${esc(c.short)}</p>
+      <div class="cmeta"><span>${c.modules.length} modules</span><span>${c.hours} h</span>${c.modules.some((m) => m.level === "Senior") ? levelPill("Senior") : ""}</div>
+      <div class="cprog"><i style="width:${pct}%"></i></div><span class="cpct">${pct}%</span></a>`;
+  }
+  views.learn = function () {
+    return `<h1 class="page-title">Learn</h1><p class="muted lead-p">Pick a career track and work through it at your own pace. Every module ends with a quiz; senior modules go deep.</p>
+      <div class="tracks">${TRACKS.map((t) => `<a class="card track" href="#/track/${esc(t.id)}"><p class="pl-label">Career track</p><h2>${esc(t.title)}</h2><p class="muted">${esc(t.role)}</p>
+        <div class="tprog"><span class="num" data-to="${trackPct(t)}">${trackPct(t)}</span><small>% done</small></div><div class="cprog"><i style="width:${trackPct(t)}%"></i></div>
+        <p class="small muted">${t.courses.length} courses • ${esc(t.certs[0])}${t.certs.length > 1 ? " and more" : ""}</p></a>`).join("")}</div>
+      <div class="sec-h"><h2>All courses</h2><span class="muted small">${COURSES.length} courses, ${COURSES.reduce((n, c) => n + c.modules.length, 0)} modules</span></div>
+      <div class="cgrid">${COURSES.map(courseCard).join("")}</div>
+      <div class="sec-h"><h2>Also here</h2></div>
+      <div class="cgrid">
+        <a class="card ccard" href="#/itil"><span class="tic">${ICON("badge")}</span><h3>ITIL Foundation</h3><p class="muted small">IT service management: 8 lessons and a 40-question mock exam.</p></a>
+        <a class="card ccard" href="#/german"><span class="tic">${ICON("language")}</span><h3>German for IT jobs</h3><p class="muted small">Phone support, tickets, interviews; flashcards with spaced repetition.</p></a>
+        <a class="card ccard" href="#/plan"><span class="tic">${ICON("calendar")}</span><h3>8-week quick start</h3><p class="muted small">Optional guided plan with a home lab, if you want a fixed schedule.</p></a>
+      </div>`;
+  };
+  views.learn.after = function () { view.querySelectorAll(".num[data-to]").forEach((n) => MOTION.countUp(n, +n.dataset.to)); MOTION.stagger(view.querySelectorAll(".track, .ccard"), 35); };
+
+  views.track = function (id) {
+    const t = TRACKS.find((x) => x.id === id); if (!t) return notFound();
+    return `<p class="kicker"><a href="#/learn">Learn</a> / Career track</p><h1 class="page-title">${esc(t.title)}</h1>
+      <p class="lead-p">${esc(t.goal)}</p>
+      <section class="card"><p class="pl-label">Certifications to aim for</p><ul class="certs">${t.certs.map((c) => `<li>${ICON("badge")}<span>${esc(c)}</span></li>`).join("")}</ul>
+        <p class="muted small" style="margin:10px 0 0">Exam details change: confirm the current version on the vendor's website before you book.</p></section>
+      <div class="sec-h"><h2>Your path</h2><span class="muted small">${trackPct(t)}% done</span></div>
+      <ol class="path">${t.courses.map((cid, i) => { const c = course(cid); if (!c) return ""; const pct = coursePct(c);
+        return `<li class="${pct === 100 ? "done" : ""}"><span class="pn">${pct === 100 ? ICON("check") : i + 1}</span><a class="card ccard row-c" href="#/course/${esc(c.id)}"><div><h3>${esc(c.title)}</h3><p class="muted small">${esc(c.short)}</p><div class="cprog"><i style="width:${pct}%"></i></div></div></a></li>`; }).join("")}</ol>`;
+  };
+  views.track.after = function () { MOTION.stagger(view.querySelectorAll(".path li"), 50); };
+
+  views.course = function (id) {
+    const c = course(id); if (!c) return notFound();
+    const nm = nextModule(c), pct = coursePct(c);
+    return `<p class="kicker"><a href="#/learn">Learn</a> / Course</p><h1 class="page-title">${esc(c.title)}</h1>
+      <p class="lead-p">${esc(c.short)}</p>
+      <div class="cmeta big"><span>${ICON("book")}${c.modules.length} modules</span><span>${ICON("clock")}about ${c.hours} hours</span><span>${ICON("badge")}${esc(c.cert)}</span></div>
+      <div class="cprog lg"><i style="width:${pct}%"></i></div>
+      <a class="go" href="#/module/${esc(c.id)}/${esc(nm.id)}" style="max-width:420px"><span class="dot">${ICON("play")}</span>${pct ? (pct === 100 ? "Review the course" : "Continue: " + esc(nm.title)) : "Start the course"}<span class="chev">${ICON("chevrons")}</span></a>
+      <div class="sec-h"><h2>Modules</h2></div>
+      <ol class="mods">${c.modules.map((m, i) => { const d = S.done[modKey(c.id, m.id)], q = S.quiz[modKey(c.id, m.id)];
+        return `<li><a class="card mod ${d ? "done" : ""}" href="#/module/${esc(c.id)}/${esc(m.id)}"><span class="pn">${d ? ICON("check") : i + 1}</span>
+          <span class="mt"><strong>${esc(m.title)}</strong><small>${levelPill(modLevel(c, m))}${q != null ? `<span class="qs">Quiz ${q}/${m.quiz.length}</span>` : ""}</small></span></a></li>`; }).join("")}</ol>`;
+  };
+  views.course.after = function () { MOTION.stagger(view.querySelectorAll(".mods li"), 40); };
+
+  views.module = function (cid, mid) {
+    const c = course(cid); const m = c && c.modules.find((x) => x.id === mid); if (!m) return notFound();
+    return `<p class="kicker"><a href="#/learn">Learn</a> / <a href="#/course/${esc(c.id)}">${esc(c.title)}</a></p><h1 class="page-title">${esc(m.title)}</h1>
+      <div class="mhead">${levelPill(modLevel(c, m))}<span class="muted small">Module ${c.modules.indexOf(m) + 1} of ${c.modules.length}</span></div><div id="player"></div>`;
+  };
+  views.module.after = function (cid, mid) {
+    const c = course(cid); const m = c && c.modules.find((x) => x.id === mid); if (!m) return;
+    const key = modKey(c.id, m.id), idx = c.modules.indexOf(m), nxt = c.modules[idx + 1];
+    try { localStorage.setItem("itsa-last", JSON.stringify({ h: `#/module/${c.id}/${m.id}`, t: m.title, c: c.title })); } catch (e) { /* storage full */ }
+    const steps = lessonSteps(m.blocks, key);
+    let qs = null;
+    if (m.quiz && m.quiz.length) steps.push({ title: "Check your understanding", label: "Quiz", html: "", after: (art) => {
+      qs = shuffleQs(m.quiz); art.querySelector(".pl-body").innerHTML = quizHTML(key, qs);
+      wireQuiz(qs, (sc) => { S.quiz[key] = Math.max(sc, S.quiz[key] || 0); save(); });
+    } });
+    steps.push({ title: "Module complete", label: "Finish", html: "", after: (art) => {
+      S.done[key] = true; save();
+      art.querySelector(".pl-body").innerHTML = `<div class="done-hero"><span class="done-mark">${ICON("check")}</span><p>${esc(m.title)} is done.${S.quiz[key] != null ? ` Quiz: ${S.quiz[key]} of ${m.quiz.length}.` : ""}</p></div>
+        ${nxt ? `<a class="card row" href="#/module/${esc(c.id)}/${esc(nxt.id)}"><span><strong>Next: ${esc(nxt.title)}</strong><small>${modLevel(c, nxt)} module</small></span></a>` : `<p class="muted" style="text-align:center">You finished every module of ${esc(c.title)}.</p>`}`;
+      MOTION.pop(art.querySelector(".done-mark"));
+    } });
+    mountPlayer($("#player"), { key: key, steps, finishLabel: nxt ? "Next module" : "Back to course",
+      onFinish: () => { location.hash = nxt ? `#/module/${c.id}/${nxt.id}` : `#/course/${c.id}`; } });
+  };
+
+  /* ---------- Practice hub, CLI labs, subnetting ---------- */
+  views.practice = function () {
+    const labs = TRAINERS.LABS;
+    return `<h1 class="page-title">Practice</h1><p class="muted lead-p">Hands-on work is what employers ask about. Do a little every day.</p>
+      <div class="sec-h"><h2>Cisco command line</h2><span class="muted small">Switch and router simulator</span></div>
+      <div class="cgrid">${labs.map((l) => `<a class="card ccard" href="#/cli/${l.id}"><span class="tic">${ICON("server")}</span><h3>${esc(l.title)}</h3><p class="muted small">${esc(l.intro)}</p>${S.done["lab-" + l.id] ? `<div class="cmeta"><span>${ICON("check")}Completed</span></div>` : ""}</a>`).join("")}</div>
+      <div class="sec-h"><h2>Trainers</h2></div>
+      <div class="cgrid">
+        <a class="card ccard" href="#/subnet"><span class="tic">${ICON("grid")}</span><h3>Subnetting trainer</h3><p class="muted small">Random IPv4 questions with instant explanations. Aim for 20 in a row.</p></a>
+        <a class="card ccard" href="#/tickets"><span class="tic">${ICON("ticket")}</span><h3>Ticket trainer</h3><p class="muted small">Realistic service desk tickets, some in German.</p></a>
+        <a class="card ccard" href="#/labs"><span class="tic">${ICON("lab")}</span><h3>Your home lab</h3><p class="muted small">Build real servers on your own PC with Hyper-V.</p></a>
+        <a class="card ccard" href="#/interview"><span class="tic">${ICON("chat")}</span><h3>Interview practice</h3><p class="muted small">Technical and behaviour questions with answer hints.</p></a>
+      </div>`;
+  };
+  views.practice.after = function () { MOTION.stagger(view.querySelectorAll(".ccard"), 35); };
+  views.cli = function (lab) {
+    const l = TRAINERS.LABS.find((x) => x.id === lab) || TRAINERS.LABS[0];
+    const i = TRAINERS.LABS.indexOf(l), nx = TRAINERS.LABS[i + 1];
+    return `<p class="kicker"><a href="#/practice">Practice</a> / Cisco command line</p><h1 class="page-title">${esc(l.title)}</h1><div id="cli"></div>
+      <nav class="pager">${i > 0 ? `<a class="btn ghost" href="#/cli/${TRAINERS.LABS[i - 1].id}">Previous lab</a>` : "<span></span>"}${nx ? `<a class="btn" href="#/cli/${nx.id}">Next lab</a>` : ""}</nav>`;
+  };
+  views.cli.after = function (lab) {
+    const l = TRAINERS.LABS.find((x) => x.id === lab) || TRAINERS.LABS[0];
+    TRAINERS.mountCli($("#cli"), l.id, (id) => { if (!S.done["lab-" + id]) { S.done["lab-" + id] = true; save(); } });
+  };
+  views.subnet = function () { return `<p class="kicker"><a href="#/practice">Practice</a></p><h1 class="page-title">Subnetting trainer</h1><p class="muted lead-p">Type the answers, press Check. For the mask you can type 255.255.255.0 or 24.</p><div id="sn"></div>`; };
+  views.subnet.after = function () { TRAINERS.mountSubnet($("#sn")); };
 
   /* ---------- Software guides ---------- */
   function guideCard(dayKey) {
@@ -718,6 +849,10 @@
   /* ---------- global search ---------- */
   const INDEX = [];
   PLAN.forEach((w) => w.days.forEach((d, i) => INDEX.push({ t: d.title, s: `Week ${w.id}, day ${i + 1}`, h: `#/day/${w.id}/${i + 1}`, ic: "calendar", k: d.title + " " + d.learn.join(" ") })));
+  (window.COURSES || []).forEach((c) => { INDEX.push({ t: c.title, s: "Course", h: `#/course/${c.id}`, ic: "book", k: c.title + " " + c.short + " " + c.cert });
+    c.modules.forEach((m) => INDEX.push({ t: m.title, s: c.title, h: `#/module/${c.id}/${m.id}`, ic: "book", k: m.title + " " + m.blocks.filter((b) => b[0] === "h" || b[0] === "one").map((b) => b[1]).join(" ") })); });
+  (window.TRAINERS ? TRAINERS.LABS : []).forEach((l) => INDEX.push({ t: l.title, s: "Cisco CLI practice", h: `#/cli/${l.id}`, ic: "server", k: l.title + " " + l.intro + " cisco ios cli" }));
+  INDEX.push({ t: "Subnetting trainer", s: "Practice", h: "#/subnet", ic: "grid", k: "subnet subnetting ipv4 mask cidr" });
   (window.GUIDES || []).forEach((g) => INDEX.push({ t: g.title, s: "Software guide", h: `#/guides/${g.id}`, ic: "book", k: g.title + " " + g.short }));
   (window.RUNBOOKS || []).forEach((r) => INDEX.push({ t: r.title, s: "Office handbook · " + r.cat, h: `#/handbook/rb/${r.id}`, ic: "library", k: r.title + " " + r.tags + " " + r.symptom }));
   (window.DEEPDIVES || []).forEach((d) => INDEX.push({ t: d.title, s: "How it really works", h: `#/handbook/dd/${d.id}`, ic: "server", k: d.title + " " + d.tags }));
@@ -766,7 +901,7 @@
     if (v.after) v.after.apply(null, args);
     MOTION.page(view);
     view.querySelectorAll("svg.diagram").forEach((g) => MOTION.draw(g));
-    document.querySelectorAll("[data-route]").forEach((a) => a.classList.toggle("on", a.dataset.route === name || (name === "day" && a.dataset.route === "plan") || (name === "quiz" && a.dataset.route === "plan")));
+    document.querySelectorAll("[data-route]").forEach((a) => a.classList.toggle("on", a.dataset.route === name || (name === "day" && a.dataset.route === "plan") || (name === "quiz" && a.dataset.route === "plan") || (["track", "course", "module"].includes(name) && a.dataset.route === "learn") || (["cli", "subnet", "tickets", "labs", "interview"].includes(name) && a.dataset.route === "practice")));
     if (window.innerWidth <= 760) closeDE();
     document.body.classList.remove("nav-open"); if (!panel.classList.contains("open")) scrim.classList.remove("on");
     window.scrollTo(0, 0);
