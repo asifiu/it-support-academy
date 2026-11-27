@@ -68,6 +68,7 @@ The plan comes from 55 real IT support and sysadmin job ads in Germany (Oct to N
 - **Deutsch Arcade**: Der-Die-Das Blitz, Memory, Hör-Diktat, Verb-Rennen (Präsens, Präteritum, Perfekt with haben/sein) and Satz-Baumeister. Every point is XP.
 - **Interface in English or German** (switch in the side menu or Progress & sync). Course content is being translated step by step.
 - **Casebooks**: real production incidents worked like a senior engineer (Active Directory, network troubleshooting).
+- **Locked down**: a Content Security Policy allows scripts only from the app itself and network calls only to the app and api.anthropic.com; the Anthropic SDK is a pinned copy in `js/vendor/` (no third-party CDN).
 - **Fast**: opens instantly from the offline copy and updates itself in the background; pages render in under 40 ms.
 - **Store-ready manifest** (shortcuts, screenshots, categories). See docs/STORE.md for publishing to Google Play, Microsoft Store, App Store and desktop.
 - **Lesson player**: every day, guide, deep dive and ITIL lesson is split into short steps with a progress bar, "Step 3 of 12", a list to jump between steps, and Back / Next until the end (swipe on phones, arrow keys on PC). It remembers where you stopped. Each day ends with a "Day complete" check.

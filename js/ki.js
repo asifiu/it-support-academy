@@ -1,6 +1,7 @@
 /* KI: AI tutor for IT and a German conversation partner, available on every page.
    Uses the learner's own Anthropic API key, stored only in this browser (localStorage key "itsa-ki",
-   never in the progress export). The SDK is loaded on first use from esm.sh. */
+   never in the progress export). The SDK is loaded on first use from js/vendor/ (same origin, pinned
+   copy of @anthropic-ai/sdk 1.14.0, see js/vendor/README.md). */
 window.KI = (function () {
   const STORE = "itsa-ki";
   const MODELS = [
@@ -16,7 +17,9 @@ window.KI = (function () {
   let busy = false, clientP = null, rec = null, pageCtx = () => "";
 
   function client() {
-    if (!clientP) clientP = import("https://esm.sh/@anthropic-ai/sdk@1.14.0").then((m) => new m.default({ apiKey: cfg.key, dangerouslyAllowBrowser: true }));
+    if (!clientP) clientP = import(new URL("js/vendor/anthropic-sdk-1.14.0.js", document.baseURI).href)
+      .then((m) => new m.default({ apiKey: cfg.key, dangerouslyAllowBrowser: true }))
+      .catch((e) => { clientP = null; throw e; });
     return clientP;
   }
 

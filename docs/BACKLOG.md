@@ -12,7 +12,7 @@ Asif can reorder or add items at any time; the job always follows this file.
 - Run the validation scripts and the browser test before publishing. Bump VERSION in sw.js.
 
 ## Security (do first)
-- [ ] Vendor a pinned copy of @anthropic-ai/sdk 1.14.0 into js/vendor/ (npm + esbuild bundle), import it from the same origin instead of esm.sh, add it to sw.js FILES, add a CSP limiting script-src to self and connect-src to self and api.anthropic.com
+- [x] Vendor a pinned copy of @anthropic-ai/sdk 1.14.0 into js/vendor/ (npm + esbuild bundle), import it from the same origin instead of esm.sh, add it to sw.js FILES, add a CSP limiting script-src to self and connect-src to self and api.anthropic.com
 
 ## Depth programme (priority 1, his main request: "deep knowledge, not basic")
 Each run: take the next course below and grow it into a full road: at least 3 Foundation, 4 Professional and 2 Senior modules, one scenario casebook (real incidents, like data/courses-cases.js), one capstone project with a lab guide, and 10 interview questions. Write in depth: why it works, how it fails, commands with real output, decisions and trade-offs. Keep the fun tone (journey stages, light humour) but never at the cost of accuracy.
@@ -54,6 +54,7 @@ Each run: take the next course below and grow it into a full road: at least 3 Fo
 - [ ] Interview simulator with the KI (role-play in English and German)
 
 ## Done
+- [x] 2026-11-27: security: @anthropic-ai/sdk 1.14.0 bundled into js/vendor/ (build notes and SHA-256 in js/vendor/README.md), KI loads it from the same origin, cached offline by sw.js; Content Security Policy in index.html (scripts only from self, connections only to self and api.anthropic.com)
 - [x] 2026-11-28: speed pass, journey maps with XP/ranks/streak/badges, Deutsch Arcade (5 games), springs and ripples, EN/DE interface, store-ready manifest, AD incidents and network troubleshooting casebooks
 - [x] 2026-11-27: Career tracks, 16 courses incl. Azure and Linux, Cisco CLI simulator, subnetting trainer
 - [x] 2026-11-27: German A2.1 and B1.1 (14 lessons), KI tutor and German conversation partner
