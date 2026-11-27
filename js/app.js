@@ -136,22 +136,42 @@
   }
 
   /* ---------- lesson renderer ---------- */
+  /* Diagrams: scroll sideways on small screens, and open full screen with pinch-zoom. */
+  function figHTML(id, caption) {
+    return `<figure class="fig"><div class="fig-scroll">${DIAGRAMS[id]}</div>
+      <figcaption>${caption ? `<span>${esc(caption)}</span>` : "<span></span>"}<button class="fig-zoom" data-zoom="${esc(id)}" aria-label="Open diagram full screen">${ICON("expand")}<span>Full screen</span></button></figcaption></figure>`;
+  }
+  document.addEventListener("click", (e) => {
+    const z = e.target.closest("[data-zoom]");
+    if (z && window.DIAGRAMS && DIAGRAMS[z.dataset.zoom]) {
+      const ov = document.createElement("div");
+      ov.className = "zoom"; ov.setAttribute("role", "dialog"); ov.setAttribute("aria-modal", "true"); ov.setAttribute("aria-label", "Diagram");
+      ov.innerHTML = `<button class="icon-btn zoom-x" aria-label="Close diagram">${ICON("close")}</button><div class="zoom-body">${DIAGRAMS[z.dataset.zoom]}</div><p class="zoom-hint">Pinch or turn your phone sideways to see more</p>`;
+      document.body.appendChild(ov); document.body.classList.add("zoom-open");
+      const close = () => { ov.remove(); document.body.classList.remove("zoom-open"); z.focus({ preventScroll: true }); };
+      ov.querySelector(".zoom-x").onclick = close; ov.querySelector(".zoom-x").focus();
+      ov.addEventListener("keydown", (k) => { if (k.key === "Escape") close(); });
+      return;
+    }
+  });
+  const callout = (kind, icon, title, body) => `<aside class="note ${kind}"><span class="note-ic">${ICON(icon)}</span><div><strong>${title}</strong>${body}</div></aside>`;
   function lessonHTML(blocks, keyPrefix) {
+    const partsTotal = blocks.filter((b) => b[0] === "part").length;
     return blocks.map((b, bi) => {
       switch (b[0]) {
-        case "part": return `<div class="part"><span>${esc(b[1])}</span>${esc(b[2])}</div>`;
+        case "part": return `<header class="part"><div class="seg" aria-hidden="true">${Array.from({ length: partsTotal }, (_, i) => `<i class="${i < +b[1] ? "on" : ""}"></i>`).join("")}</div><p class="part-n">Part ${esc(b[1])} of ${partsTotal}</p><h2>${esc(b[2])}</h2></header>`;
         case "one": return `<p class="one">${esc(b[1])}</p>`;
         case "parts": return `<div class="table"><table class="parts"><tbody>${b[1].map(([n, d]) => `<tr><th>${esc(n)}</th><td>${esc(d)}</td></tr>`).join("")}</tbody></table></div>`;
-        case "svg": return window.DIAGRAMS && DIAGRAMS[b[1]] ? `<figure class="fig">${DIAGRAMS[b[1]]}${b[2] ? `<figcaption>${esc(b[2])}</figcaption>` : ""}</figure>` : "";
-        case "done": return `<div class="note sum"><strong>Done when</strong>${b[1].map((t, i) => check((keyPrefix || "x") + "-done-" + bi + "-" + i, t)).join("")}</div>`;
+        case "svg": return window.DIAGRAMS && DIAGRAMS[b[1]] ? figHTML(b[1], b[2]) : "";
+        case "done": return callout("sum", "list", "Done when", b[1].map((t, i) => check((keyPrefix || "x") + "-done-" + bi + "-" + i, t)).join(""));
         case "h": return `<h3>${esc(b[1])}</h3>`;
         case "p": return `<p>${esc(b[1])}</p>`;
-        case "eg": return `<div class="note eg"><strong>Example</strong> ${esc(b[1])}</div>`;
-        case "tip": return `<div class="note tip"><strong>Tip</strong> ${esc(b[1])}</div>`;
-        case "warn": return `<div class="note warn"><strong>Watch out</strong> ${esc(b[1])}</div>`;
+        case "eg": return callout("eg", "book", "Example", `<p>${esc(b[1])}</p>`);
+        case "tip": return callout("tip", "bulb", "Tip", `<p>${esc(b[1])}</p>`);
+        case "warn": return callout("warn", "alert", "Watch out", `<p>${esc(b[1])}</p>`);
         case "steps": return `<ol class="steps">${b[1].map((s) => `<li>${esc(s)}</li>`).join("")}</ol>`;
         case "cmd": return `<div class="cmd"><code>${esc(b[1])}</code><button class="copy" data-copy="${esc(b[1])}">Copy</button><p>${esc(b[2])}</p></div>`;
-        case "sum": return `<div class="note sum"><strong>Remember</strong><ul>${b[1].map((s) => `<li>${esc(s)}</li>`).join("")}</ul></div>`;
+        case "sum": return callout("sum", "list", "Remember", `<ul>${b[1].map((s) => `<li>${esc(s)}</li>`).join("")}</ul>`);
         default: return "";
       }
     }).join("");
@@ -274,7 +294,7 @@
   };
 
   views.labs = function () {
-    return `<h1>Your home lab</h1><figure class="fig card">${(window.DIAGRAMS || {}).lab || ""}<figcaption>What you will build in 8 weeks, all inside your own PC.</figcaption></figure><section class="card"><p>${esc(LAB.host)}</p><p><strong>Network:</strong> ${esc(LAB.network)}</p></section>
+    return `<h1>Your home lab</h1><section class="card">${window.DIAGRAMS ? figHTML("lab", "What you will build in 8 weeks, all inside your own PC") : ""}</section><section class="card"><p>${esc(LAB.host)}</p><p><strong>Network:</strong> ${esc(LAB.network)}</p></section>
       <section class="card"><h2>Machines you will build</h2><div class="table"><table><thead><tr><th>Name</th><th>System</th><th>IP</th><th>Used for</th><th>From</th></tr></thead>
       <tbody>${LAB.vms.map((r) => `<tr>${r.map((c) => `<td>${esc(c)}</td>`).join("")}</tr>`).join("")}</tbody></table></div></section>
       <section class="card"><h2>Lab rules</h2><ul>${LAB.rules.map((r) => `<li>${esc(r)}</li>`).join("")}</ul></section>`;
