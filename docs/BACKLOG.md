@@ -17,7 +17,7 @@ Asif can reorder or add items at any time; the job always follows this file.
 ## Depth programme (priority 1, his main request: "deep knowledge, not basic")
 Each run: take the next course below and grow it into a full road: at least 3 Foundation, 4 Professional and 2 Senior modules, one scenario casebook (real incidents, like data/courses-cases.js), one capstone project with a lab guide, and 10 interview questions. Write in depth: why it works, how it fails, commands with real output, decisions and trade-offs. Keep the fun tone (journey stages, light humour) but never at the cost of accuracy.
 - [x] Active Directory: full road done 2026-11-27 (3 Foundation, 9 Professional incl. casebook, capstone and interview, 2 Senior) in data/courses-ad-deep.js
-- [ ] Microsoft 365 / Exchange Online
+- [ ] Microsoft 365 / Exchange Online: part 1 done 2026-11-28 (Exchange Online road, 15 modules, data/courses-exo-deep.js). Still to do: the "m365" tenant administration course (tenant, users and licences, admin roles) grown to a full road the same way
 - [ ] Intune and Windows deployment
 - [ ] Networking fundamentals + CCNA switching
 - [ ] CCNA routing, services, security, automation
@@ -54,6 +54,7 @@ Each run: take the next course below and grow it into a full road: at least 3 Fo
 - [ ] Interview simulator with the KI (role-play in English and German)
 
 ## Done
+- [x] 2026-11-28: Exchange Online depth road (15 modules, Foundation to Senior): what Exchange Online is, ten service desk mail tickets, how Outlook connects, SPF/DKIM/DMARC in depth, message trace and NDR codes (Get-MessageTraceV2), retention, holds, audit and eDiscovery, hybrid and migrations, a six-case casebook, hardening (legacy protocols, RBAC for Applications, EWS and SMTP AUTH retirements), mail design decisions, capstone lab "Kaffee & Co. GmbH", 10 interview questions
 - [x] 2026-11-27: Active Directory depth road: new Foundation modules (what AD is, service desk tasks, sign-in chain), Professional deep dives (sites, replication and AD DNS; Kerberos, delegation and gMSA), Senior lifecycle module (DC upgrades, Windows Server 2025 functional level and 32k pages, migrations, forest recovery), capstone lab "corp.lab", 10 interview questions; modules ordered Foundation to Senior
 - [x] 2026-11-27: security: @anthropic-ai/sdk 1.14.0 bundled into js/vendor/ (build notes and SHA-256 in js/vendor/README.md), KI loads it from the same origin, cached offline by sw.js; Content Security Policy in index.html (scripts only from self, connections only to self and api.anthropic.com)
 - [x] 2026-11-28: speed pass, journey maps with XP/ranks/streak/badges, Deutsch Arcade (5 games), springs and ripples, EN/DE interface, store-ready manifest, AD incidents and network troubleshooting casebooks
