@@ -1020,6 +1020,7 @@
       <div class="sec-h"><h2>${T("Trainers")}</h2></div>
       <div class="cgrid">
         <a class="card ccard" href="#/subnet"><span class="tic">${ICON("grid")}</span><h3>Subnetting trainer</h3><p class="muted small">Random IPv4 questions with instant explanations. Aim for 20 in a row.</p></a>
+        <a class="card ccard" href="#/desk"><span class="tic">${ICON("clock")}</span><h3>Service desk simulator</h3><p class="muted small">Run a live shift: queue, SLA clocks, triage, escalation notes, shift report.</p></a>
         <a class="card ccard" href="#/tickets"><span class="tic">${ICON("ticket")}</span><h3>Ticket trainer</h3><p class="muted small">Realistic service desk tickets, some in German.</p></a>
         <a class="card ccard" href="#/labs"><span class="tic">${ICON("lab")}</span><h3>Your home lab</h3><p class="muted small">Build real servers on your own PC with Hyper-V.</p></a>
         <a class="card ccard" href="#/interview"><span class="tic">${ICON("chat")}</span><h3>Interview practice</h3><p class="muted small">Technical and behaviour questions with answer hints.</p></a>
@@ -1242,6 +1243,8 @@
 
   /* ---------- Wortschatz (js/wortschatz.js) ---------- */
   const WS = window.WORTSCHATZ_APP ? WORTSCHATZ_APP({ state: () => S, save, esc, ICON, sayBtn, MOTION, shuffled }) : null;
+  const DESKX = window.DESK_APP ? DESK_APP({ state: () => S, save, esc, ICON, MOTION, shuffled }) : null;
+  if (DESKX) Object.assign(views, DESKX.views);
   if (WS) {
     Object.assign(views, WS.views);
     // The daily duty sits on top of Today until it is done.
@@ -1313,7 +1316,7 @@
     const depth = parts.filter(Boolean).length + (["track", "course", "module", "dunit", "game", "cli", "day", "quiz", "wcards", "wlist", "wday"].includes(name) ? 1 : 0);
     MOTION.push(view, prevDepth == null ? 0 : depth > prevDepth ? 1 : depth < prevDepth ? -1 : 0); prevDepth = depth;
     view.querySelectorAll("svg.diagram").forEach((g) => MOTION.draw(g));
-    document.querySelectorAll("[data-route]").forEach((a) => a.classList.toggle("on", a.dataset.route === name || (name === "day" && a.dataset.route === "plan") || (name === "quiz" && a.dataset.route === "plan") || (["track", "course", "module"].includes(name) && a.dataset.route === "learn") || (["cli", "subnet", "tickets", "labs", "interview"].includes(name) && a.dataset.route === "practice") || (["dunit", "arcade", "game", "wort", "wcards", "wlist", "wday"].includes(name) && a.dataset.route === "german")));
+    document.querySelectorAll("[data-route]").forEach((a) => a.classList.toggle("on", a.dataset.route === name || (name === "day" && a.dataset.route === "plan") || (name === "quiz" && a.dataset.route === "plan") || (["track", "course", "module"].includes(name) && a.dataset.route === "learn") || (["cli", "subnet", "tickets", "labs", "interview", "desk"].includes(name) && a.dataset.route === "practice") || (["dunit", "arcade", "game", "wort", "wcards", "wlist", "wday"].includes(name) && a.dataset.route === "german")));
     if (window.innerWidth <= 760) closeDE();
     document.body.classList.remove("nav-open"); if (!panel.classList.contains("open")) scrim.classList.remove("on");
     if (WS) document.querySelectorAll('[data-route="german"]').forEach((a) => a.classList.toggle("duty-due", !WS.dutyDone()));
